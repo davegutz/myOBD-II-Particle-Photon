@@ -1,17 +1,7 @@
-
 /*
-Micro-OLED-Shield-Example.ino
-SparkFun Micro OLED Library Hello World Example
-Jim Lindblom @ SparkFun Electronics
-Original Creation Date: June 22, 2015
-
-This sketch prints a friendly, recognizable logo on the OLED Shield, then
-  goes on to demo the Micro OLED library's functionality drawing pixels,
-  lines, shapes, and text.
-
-  Hardware Connections:
-  This sketch was written specifically for the Photon Micro OLED Shield, which does all the wiring for you. If you have a Micro OLED breakout, use the following hardware setup:
-
+OBD-II Interface
+Display OBD-II output to OLED.
+  OLED Connections:
     MicroOLED ------------- Photon
       GND ------------------- GND
       VDD ------------------- 3.3V (VCC)
@@ -21,174 +11,199 @@ This sketch prints a friendly, recognizable logo on the OLED Shield, then
       D/C ------------------- D6 (can be any digital pin)
       RST ------------------- D7 (can be any digital pin)
       CS  ------------------- A2 (can be any digital pin)
-
-  Development environment specifics:
-    IDE: Particle Build
+  UART Connections:
+    UART/FTID --------------- Photon
+      GND ------------------- GND
+      Tx  ------------------- Rx (Serial1)
+      Rx  ------------------- Tx (Serial1)
     Hardware Platform: Particle Photon
-                       SparkFun Photon Micro OLED Shield
-
-  This code is beerware; if you see me (or any other SparkFun
-  employee) at the local, and you've found our code helpful,
-  please buy us a round!
-
+                       SparkFun Photon Micro OLED
+                      SparkFun UART/FTID OBD-II Shield
   Distributed as-is; no warranty is given.
 */
-
-//////////////////////////////////
-// MicroOLED Object Declaration //
-//////////////////////////////////
-// Declare a MicroOLED object. If no parameters are supplied, default pins are
-// used, which will work for the Photon Micro OLED Shield (RST=D7, DC=D6, CS=A2)
+//#include "application.h"
+SYSTEM_THREAD(ENABLED);      // Make sure heat system code always run regardless of network status
+#define TEST_SERIAL
 #include "SparkFunMicroOLED.h"  // Include MicroOLED library
 #include "math.h"
-
-//MicroOLED oled(MODE_I2C, D7, 0);    // Example I2C declaration RST=D7, DC=LOW (0)
-
-//SYSTEM_MODE(MANUAL);
-
 MicroOLED oled;
-
+void display(const uint8_t x, const uint8_t y, const String str, const uint8_t clear=0, const uint8_t type=0, const uint8_t clearA=0);
+//SYSTEM_MODE(MANUAL);
+//This is a character buffer that will store the data from the serial port
+char rxData[20];
+char rxIndex=0;
+//Variables to hold the speed and RPM data.
+int vehicleSpeed  = 0;  // kph
+int vehicleRPM    = 0;  // rpm
+int verbose       = 5;  // Debugging Serial.print as much as you can tolerate.  0=none
 void setup()
 {
+  Serial.begin(9600);
+  Serial1.begin(9600);
+  delay(2000);
   oled.begin();    // Initialize the OLED
-  oled.clear(ALL); // Clear the display's internal memory
-  oled.display();  // Display what's in the buffer (splashscreen)
-  delay(1000);     // Delay 1000 ms
-  oled.clear(PAGE); // Clear the buffer.
-
-  randomSeed(analogRead(A0) + analogRead(A1));
-}
-
-
-void pixelExample()
-{
-  printTitle("Pixels", 1);
-
-  for (int i=0; i<512; i++)
-  {
-    oled.pixel(random(oled.getLCDWidth()), random(oled.getLCDHeight()));
-    oled.display();
-  }
-}
-
-void lineExample()
-{
-  int middleX = oled.getLCDWidth() / 2;
-  int middleY = oled.getLCDHeight() / 2;
-  int xEnd, yEnd;
-  int lineWidth = min(middleX, middleY);
-
-  printTitle("Lines!", 1);
-
-  for (int i=0; i<3; i++)
-  {
-    for (int deg=0; deg<360; deg+=15)
-    {
-      xEnd = lineWidth * cos(deg * M_PI / 180.0);
-      yEnd = lineWidth * sin(deg * M_PI / 180.0);
-
-      oled.line(middleX, middleY, middleX + xEnd, middleY + yEnd);
-      oled.display();
-      delay(10);
-    }
-    for (int deg=0; deg<360; deg+=15)
-    {
-      xEnd = lineWidth * cos(deg * M_PI / 180.0);
-      yEnd = lineWidth * sin(deg * M_PI / 180.0);
-
-      oled.line(middleX, middleY, middleX + xEnd, middleY + yEnd, BLACK, NORM);
-      oled.display();
-      delay(10);
-    }
-  }
-}
-
-void shapeExample()
-{
-  printTitle("Shapes!", 0);
-
-  // Silly pong demo. It takes a lot of work to fake pong...
-  int paddleW = 3;  // Paddle width
-  int paddleH = 15;  // Paddle height
-  // Paddle 0 (left) position coordinates
-  int paddle0_Y = (oled.getLCDHeight() / 2) - (paddleH / 2);
-  int paddle0_X = 2;
-  // Paddle 1 (right) position coordinates
-  int paddle1_Y = (oled.getLCDHeight() / 2) - (paddleH / 2);
-  int paddle1_X = oled.getLCDWidth() - 3 - paddleW;
-  int ball_rad = 2;  // Ball radius
-  // Ball position coordinates
-  int ball_X = paddle0_X + paddleW + ball_rad;
-  int ball_Y = random(1 + ball_rad, oled.getLCDHeight() - ball_rad);//paddle0_Y + ball_rad;
-  int ballVelocityX = 1;  // Ball left/right velocity
-  int ballVelocityY = 1;  // Ball up/down velocity
-  int paddle0Velocity = -1;  // Paddle 0 velocity
-  int paddle1Velocity = 1;  // Paddle 1 velocity
-
-  //while(ball_X >= paddle0_X + paddleW - 1)
-  while ((ball_X - ball_rad > 1) &&
-         (ball_X + ball_rad < oled.getLCDWidth() - 2))
-  {
-    // Increment ball's position
-    ball_X+=ballVelocityX;
-    ball_Y+=ballVelocityY;
-    // Check if the ball is colliding with the left paddle
-    if (ball_X - ball_rad < paddle0_X + paddleW)
-    {
-      // Check if ball is within paddle's height
-      if ((ball_Y > paddle0_Y) && (ball_Y < paddle0_Y + paddleH))
-      {
-        ball_X++;  // Move ball over one to the right
-        ballVelocityX = -ballVelocityX; // Change velocity
-      }
-    }
-    // Check if the ball hit the right paddle
-    if (ball_X + ball_rad > paddle1_X)
-    {
-      // Check if ball is within paddle's height
-      if ((ball_Y > paddle1_Y) && (ball_Y < paddle1_Y + paddleH))
-      {
-        ball_X--;  // Move ball over one to the left
-        ballVelocityX = -ballVelocityX; // change velocity
-      }
-    }
-    // Check if the ball hit the top or bottom
-    if ((ball_Y <= ball_rad) || (ball_Y >= (oled.getLCDHeight() - ball_rad - 1)))
-    {
-      // Change up/down velocity direction
-      ballVelocityY = -ballVelocityY;
-    }
-    // Move the paddles up and down
-    paddle0_Y += paddle0Velocity;
-    paddle1_Y += paddle1Velocity;
-    // Change paddle 0's direction if it hit top/bottom
-    if ((paddle0_Y <= 1) || (paddle0_Y > oled.getLCDHeight() - 2 - paddleH))
-    {
-      paddle0Velocity = -paddle0Velocity;
-    }
-    // Change paddle 1's direction if it hit top/bottom
-    if ((paddle1_Y <= 1) || (paddle1_Y > oled.getLCDHeight() - 2 - paddleH))
-    {
-      paddle1Velocity = -paddle1Velocity;
-    }
-
-    // Draw the Pong Field
-    oled.clear(PAGE);  // Clear the page
-    // Draw an outline of the screen:
-    oled.rect(0, 0, oled.getLCDWidth() - 1, oled.getLCDHeight());
-    // Draw the center line
-    oled.rectFill(oled.getLCDWidth()/2 - 1, 0, 2, oled.getLCDHeight());
-    // Draw the Paddles:
-    oled.rectFill(paddle0_X, paddle0_Y, paddleW, paddleH);
-    oled.rectFill(paddle1_X, paddle1_Y, paddleW, paddleH);
-    // Draw the ball:
-    oled.circle(ball_X, ball_Y, ball_rad);
-    // Actually draw everything on the screen:
-    oled.display();
-    delay(25);  // Delay for visibility
-  }
+  //Reset the OBD-II-UART
+  if (Serial1.available()) Serial1.println("ATZ");
+  //Wait for a bit before starting to send commands after the reset.
+  delay(2000);
+  //Delete any data that may be in the serial port before we begin.
+  Serial1.flush();
+  display(0, 0, "WAIT", 1, 1, 1);
+  //Wait for a little while before sending the reset command to the OBD-II-UART
   delay(1000);
 }
+
+
+void loop(){
+  if (verbose>4)
+  {
+    display(0, 0, "begin", 1, 1);
+    delay(1000);
+  }
+  //Delete any data that may be in the serial port before we begin.
+  //Serial1.flush();
+  if (verbose>3)
+  {
+    display(0, 0, "Tx:010D", 1);
+  }
+  //Query the OBD-II-UART for the Vehicle Speed
+  Serial1.println("010D");
+  delay(1000);
+  getResponse();
+  delay(1000);
+  #ifdef TEST_SERIAL   // Jumper Tx to Rx
+    if (verbose>3)
+    {
+      display(0, 0, "Tx:60", 1);
+      delay(1000);
+    }
+    //Serial1.flush();
+    Serial1.println("60");
+  #endif
+  getResponse();
+  delay(1000);
+  #ifndef TEST_SERIAL
+    vehicleSpeed = strtol(&rxData[6],0,16);
+  #else
+    vehicleSpeed = atol(rxData);
+  #endif
+  display(0, 1, String(vehicleSpeed)+" kph");
+  delay(1000);
+
+  //Delete any data that may be left over in the serial port.
+  //Serial1.flush();
+  //Query the OBD-II-UART for the Vehicloe rpm.
+  if (verbose>3)
+  {
+    display(0, 0, "Tx:010C", 1);
+    delay(1000);
+  }
+  Serial1.println("010C");
+  getResponse();
+  delay(1000);
+  #ifdef TEST_SERIAL   //   Jumper Tx to Rx
+    if (verbose>3)
+    {
+      display(0, 0, "Tx:900", 1);
+      delay(1000);
+    }
+    //Serial1.flush();
+    Serial1.println("900");
+  #endif
+  getResponse();
+  delay(1000);
+  //NOTE: RPM data is two bytes long, and delivered in 1/4 RPM from the OBD-II-UART
+  #ifndef TEST_SERIAL
+    vehicleRPM = ((strtol(&rxData[6],0,16)*256)+strtol(&rxData[9],0,16))/4;
+  #else
+    vehicleRPM = atol(rxData);
+  #endif
+  display(0, 1, String(vehicleRPM)+" rpm");
+
+  //Give the OBD bus a rest
+  delay(1000);
+
+}
+
+
+// Simple OLED print
+void display(const uint8_t x, const uint8_t y, const String str, const uint8_t clear, const uint8_t type, const uint8_t clearA)
+{
+  Serial.println(str);
+  if (clearA) oled.clear(ALL);
+  if (clear) oled.clear(PAGE);
+  oled.setFontType(type);
+  oled.setCursor(x, y*oled.getFontHeight());
+  oled.print(str);
+  oled.display();
+}
+
+
+//The getResponse function collects incoming data from the UART into the rxData buffer
+// and only exits when a carriage return character is seen. Once the carriage return
+// string is detected, the rxData buffer is null terminated (so we can treat it as a string)
+// and the rxData index is reset to 0 so that the next string can be copied.
+void getResponse(void){
+  char inChar=0;
+  if (verbose>4){
+    Serial.printf("Rx:");
+    oled.setFontType(0);
+    oled.setCursor(0, oled.getFontHeight());
+    oled.print("Rx:");
+    oled.display();
+  }
+  //Keep reading characters until we get a carriage return
+  bool go = true;
+  uint8_t count = 0;
+  while(go && count++<10){
+    //If a character comes in on the serial port, we need to act on it.
+    if(Serial1.available() > 0){
+      //Start by checking if we've received the end of message character ('\r').
+      if(Serial1.peek() == '\r'){
+        //Clear the Serial1 buffer
+        inChar=Serial1.read();
+        //Serial1.read();   // empty the buffer of lf
+        rxData[rxIndex++]='\0';
+        //Reset the buffer index so that the next character goes back at the beginning of the string.
+        rxIndex=0;
+        if (verbose>4){
+          Serial.printf(";\n");
+          oled.printf(";");
+          oled.display();  // Display what's in the buffer (splashscreen)
+        }
+        go = false;
+      }
+      //If we didn't get the end of message character, just add the new character to the string.
+      else{
+        //Get the new character from the Serial1 port.
+        inChar = Serial1.read();
+        if (isspace(inChar)) continue;  // Strip line feeds left from previous \n-\r
+        if (verbose>4){
+          Serial.printf("%c", inChar);
+          oled.printf("%c", inChar);
+          oled.display();  // Display what's in the buffer (splashscreen)
+          delay(100);
+        }
+        //Add the new character to the string, and increment the index variable.
+        rxData[rxIndex++] = inChar;
+      }
+    }
+    else{   // !available
+      if (verbose>4){
+        delay(1000);
+        oled.printf(".");
+        oled.display();  // Display what's in the buffer (splashscreen)
+      }
+    }
+  }
+}
+
+
+
+
+
+
+
 
 void textExamples()
 {
@@ -319,13 +334,6 @@ void printTitle(String title, int font)
   oled.display();
   delay(1500);
   oled.clear(PAGE);
-}
-void loop()
-{
-  pixelExample();  // Run the pixel example function
-  lineExample();   // Then the line example function
-  shapeExample();  // Then the shape example
-  textExamples();  // Finally the text example
 }
 
 
@@ -671,7 +679,7 @@ public:
     void drawVLine(uint8_t x, uint8_t y, uint8_t h);
     //-------------------------------
     //special functions for our adapters
-    void setFont(uint8_t font); //set font, availale: 6,10,18,51,120,123, user font: 200-203
+    void setFont(uint8_t font); //set font, available: 6,10,18,51,120,123, user font: 200-203
     void nextTextLine(void); //got to next text line, depending on the font size
     void setColor(uint8_t); //set color for graphic function
     void backLightOn(void); //Turn on back light
