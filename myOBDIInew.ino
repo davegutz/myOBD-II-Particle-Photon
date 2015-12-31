@@ -23,7 +23,7 @@ Display OBD-II output to OLED.
 */
 //#include "application.h"
 SYSTEM_THREAD(ENABLED);      // Make sure heat system code always run regardless of network status
-#define TEST_SERIAL
+//#define TEST_SERIAL
 #include "SparkFunMicroOLED.h"  // Include MicroOLED library
 #include "math.h"
 void display(const uint8_t x, const uint8_t y, const String str, const uint8_t clear=0, const uint8_t type=0, const uint8_t clearA=0);
@@ -48,11 +48,13 @@ void setup()
   oled.begin();    // Initialize the OLED
   display(0, 0, "WAIT", 1, 1, 1);
 
+  #ifndef TEST_SERIAL   // Jumper Tx to Rx
+    WiFi.off();
+  #endif
+
   //Reset the OBD-II-UART
   if (Serial1.available()) Serial1.println("ATZ");
-  delay(2000);
-  Serial1.flush();
-  delay(1000);
+  delay(3000);
 }
 
 
@@ -60,20 +62,20 @@ void loop(){
   if (verbose>4)
   {
     display(0, 0, "begin", 1, 1);
-    delay(1000);
   }
-  //Delete any data that may be in the serial port before we begin.
-  //Serial1.flush();
+  delay(1000);
+
+  // Get speed
   if (verbose>3)
   {
     display(0, 0, "Tx:010D", 1);
   }
   //Query the OBD-II-UART for the Vehicle Speed
+  Serial1.flush();
   Serial1.println("010D");
-  delay(1000);
   getResponse();
-  delay(1000);
   #ifdef TEST_SERIAL   // Jumper Tx to Rx
+    delay(1000);
     if (verbose>3)
     {
       display(0, 0, "Tx:60", 1);
@@ -83,27 +85,33 @@ void loop(){
     Serial1.println("60");
   #endif
   getResponse();
-  delay(1000);
   #ifndef TEST_SERIAL
     vehicleSpeed = strtol(&rxData[6],0,16);
   #else
+    delay(1000);
     vehicleSpeed = atol(rxData);
   #endif
-  display(0, 1, String(vehicleSpeed)+" kph");
-  delay(1000);
+  if (strlen(rxData)>4)
+    display(0, 2, String(vehicleSpeed)+" kph");
+  else
+    display(0, 2, "--- kph");
 
   //Delete any data that may be left over in the serial port.
-  //Serial1.flush();
-  //Query the OBD-II-UART for the Vehicloe rpm.
+  delay(2000);
+
+  // Get rpm
   if (verbose>3)
   {
     display(0, 0, "Tx:010C", 1);
-    delay(1000);
+    #ifdef TEST_SERIAL   // Jumper Tx to Rx
+      delay(1000);
+    #endif
   }
+  Serial1.flush();
   Serial1.println("010C");
   getResponse();
-  delay(1000);
   #ifdef TEST_SERIAL   //   Jumper Tx to Rx
+    delay(1000);
     if (verbose>3)
     {
       display(0, 0, "Tx:900", 1);
@@ -113,25 +121,25 @@ void loop(){
     Serial1.println("900");
   #endif
   getResponse();
-  delay(1000);
   //NOTE: RPM data is two bytes long, and delivered in 1/4 RPM from the OBD-II-UART
   #ifndef TEST_SERIAL
     vehicleRPM = ((strtol(&rxData[6],0,16)*256)+strtol(&rxData[9],0,16))/4;
   #else
+    delay(1000);
     vehicleRPM = atol(rxData);
   #endif
-  display(0, 1, String(vehicleRPM)+" rpm");
-
-  //Give the OBD bus a rest
-  delay(1000);
-
+  if (strlen(rxData)>4)
+    display(0, 2, String(vehicleRPM)+" rpm");
+  else
+    display(0, 2, "--- rpm");
+  delay(2000);
 }
 
 
 // Simple OLED print
 void display(const uint8_t x, const uint8_t y, const String str, const uint8_t clear, const uint8_t type, const uint8_t clearA)
 {
-  Serial.println(str);
+  Serial.println(str); Serial.flush();
   if (clearA) oled.clear(ALL);
   if (clear) oled.clear(PAGE);
   oled.setFontType(type);
@@ -148,7 +156,7 @@ void display(const uint8_t x, const uint8_t y, const String str, const uint8_t c
 void getResponse(void){
   char inChar=0;
   if (verbose>4){
-    Serial.printf("Rx:");
+    Serial.printf("Rx:"); Serial.flush();
     oled.setFontType(0);
     oled.setCursor(0, oled.getFontHeight());
     oled.print("Rx:");
@@ -156,8 +164,13 @@ void getResponse(void){
   }
   //Keep reading characters until we get a carriage return
   bool go = true;
-  uint8_t count = 0;
-  while(go && count++<10){
+  unsigned long count = 0UL;
+  #ifndef TEST_SERIAL
+    const unsigned long countMax = ULONG_MAX;
+  #else
+    const unsigned long countMax = 10UL;
+  #endif
+  while(go && count++<countMax){
     //If a character comes in on the serial port, we need to act on it.
     if(Serial1.available() > 0){
       //Start by checking if we've received the end of message character ('\r').
@@ -169,32 +182,36 @@ void getResponse(void){
         //Reset the buffer index so that the next character goes back at the beginning of the string.
         rxIndex=0;
         if (verbose>4){
-          Serial.printf(";\n");
+          Serial.printf(";\n"); Serial.flush();
           oled.printf(";");
           oled.display();  // Display what's in the buffer (splashscreen)
         }
         go = false;
       }
-      //If we didn't get the end of message character, just add the new character to the string.
+      //If we didn't yet get the end of message character, add the new character to the string.
       else{
         //Get the new character from the Serial1 port.
         inChar = Serial1.read();
         if (isspace(inChar)) continue;  // Strip line feeds left from previous \n-\r
         if (verbose>4){
-          Serial.printf("%c", inChar);
+          Serial.printf("%c", inChar); Serial.flush();
           oled.printf("%c", inChar);
           oled.display();  // Display what's in the buffer (splashscreen)
-          delay(100);
+          #ifdef TEST_SERIAL   //   Jumper Tx to Rx
+            delay(100);
+          #endif
         }
         //Add the new character to the string, and increment the index variable.
         rxData[rxIndex++] = inChar;
       }
     }
-    else{   // !available
+    else{   // not available
       if (verbose>4){
-        delay(1000);
-        oled.printf(".");
-        oled.display();  // Display what's in the buffer (splashscreen)
+        #ifdef TEST_SERIAL   //   Jumper Tx to Rx
+          delay(1000);
+          Serial.printf("."); Serial.flush();
+          oled.printf(".");   oled.display();
+        #endif
       }
     }
   }
