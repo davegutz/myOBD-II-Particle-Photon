@@ -55,10 +55,10 @@ SYSTEM_THREAD(ENABLED);      // Make sure heat system code always run regardless
 //#define TEST_SERIAL
 #include "SparkFunMicroOLED.h"  // Include MicroOLED library
 #include "math.h"
-void display(const uint8_t x, const uint8_t y, const String str, const uint8_t clear=0, const uint8_t type=0, const uint8_t clearA=0);
-int rxFlushToPrompt(const char pchar);
-int ping(const String cmd);
-void pingJump(const String cmd, const String val);
+void  display(const uint8_t x, const uint8_t y, const String str, const uint8_t clear=0, const uint8_t type=0, const uint8_t clearA=0);
+int   rxFlushToChar(const char pchar);
+int   ping(const String cmd);
+int   pingJump(const String cmd, const String val);
 MicroOLED oled;
 //SYSTEM_MODE(MANUAL);
 
@@ -126,19 +126,19 @@ void loop(){
 
 
 // boilerplate jumper driver
-void pingJump(const String cmd, const String val)
+int pingJump(const String cmd, const String val)
 {
-  int notConnected = 0;
   if (verbose>3) display(0, 0, "Tx:" + cmd, 1);
   delay(1000);
   Serial1.println(cmd);
   delay(1000);
-  getResponse();
+  //getResponse();
+  int notConnected = rxFlushToChar('\r');
   delay(1000);
   if (verbose>3) display(0, 0, "Tx:" + val, 1);
   delay(1000);
   Serial1.println(val);
-  notConnected = getResponse();
+  notConnected = getResponse() || notConnected;
   if (notConnected)
   {
     display(0, 0, "No conn>", 1, 1);
@@ -147,14 +147,17 @@ void pingJump(const String cmd, const String val)
     while (!Serial.read());
   }
   delay(1000);
+  return(notConnected);
 }
 
 // Boilerplate driver
 int ping(const String cmd)
 {
-  int notConnected = 0;
+  int notConnected = rxFlushToChar('>');
   if (verbose>3) display(0, 0, "Tx:" + cmd, 1);
-  notConnected = rxFlushToPrompt('>');
+  Serial1.println(cmd + '\0');
+  notConnected = getResponse()  || notConnected;
+  notConnected = getResponse()  || notConnected;
   if (notConnected)
   {
     display(0, 0, "No conn>", 1, 1);
@@ -162,8 +165,7 @@ int ping(const String cmd)
     while (!Serial.available() && count++<5) delay(1000);
     while (!Serial.read());
   }
-  Serial1.println(cmd);
-  return (getResponse());
+  return (notConnected);
 }
 
 
@@ -180,7 +182,7 @@ void display(const uint8_t x, const uint8_t y, const String str, const uint8_t c
 }
 
 // Spin until pchar, 0 if found, 1 if fail
-int rxFlushToPrompt(const char pchar)
+int rxFlushToChar(const char pchar)
 {
   char inChar=0;
   if (verbose>4){
@@ -191,9 +193,9 @@ int rxFlushToPrompt(const char pchar)
     oled.display();
   }
   //Keep reading characters until we get a carriage return
-  bool go = true;
+  bool notFound = true;
   int count = 0;
-  while (go && rxIndex<20 && ++count<45)
+  while (notFound && rxIndex<20 && ++count<45)
   {
     if(Serial1.available() > 0)
     {
@@ -204,7 +206,7 @@ int rxFlushToPrompt(const char pchar)
           oled.printf(";");
           oled.display();
         }
-        go = false;
+        notFound = false;
       }
       else    // New char
       {
@@ -228,7 +230,7 @@ int rxFlushToPrompt(const char pchar)
       }
     }
   }
-  return (go);
+  return (notFound);
 }
 
 
@@ -246,9 +248,9 @@ int getResponse(void){
     oled.display();
   }
   //Keep reading characters until we get a carriage return
-  bool go = true;
+  bool notFound = true;
   int count = 0;
-  while (go && rxIndex<20 && ++count<45)
+  while (notFound && rxIndex<20 && ++count<45)
   {
     if(Serial1.available() > 0)
     {
@@ -261,7 +263,7 @@ int getResponse(void){
           oled.printf(";");
           oled.display();
         }
-        go = false;
+        notFound = false;
       }
       else    // New char
       {
@@ -287,7 +289,7 @@ int getResponse(void){
       }
     }
   }
-  return (go);
+  return (notFound);
 }
 
 
@@ -444,25 +446,25 @@ void printTitle(String title, int font)
 /*
 #include <math.h>
 
-#define _Digole_Serial_SPI_
+#define _DinotFoundle_Serial_SPI_
 #define SC_W 160  //screen width in pixels
 #define SC_H 128  //screen Hight in pixels
 #define _TEXT_ 0
 #define _GRAPH_ 1
 
 //
-// Digole.h
+// DinotFoundle.h
 //
 
-class DigoleSerialDisp : public Print {
+class DinotFoundleSerialDisp : public Print {
 public:
 
 //
 // UART/I2C/SPI Functions
 //
 
-#if defined(_Digole_Serial_SPI_)
-    DigoleSerialDisp(uint8_t pinSS) {
+#if defined(_DinotFoundle_Serial_SPI_)
+    DinotFoundleSerialDisp(uint8_t pinSS) {
 
         _Comdelay = 10;
         _SS = pinSS;
@@ -496,8 +498,8 @@ public:
     }
 #endif
 
-#if defined(_Digole_Serial_SoftSPI_)
-    DigoleSerialDisp(uint8_t pinData, uint8_t pinClock, uint8_t pinSS) {
+#if defined(_DinotFoundle_Serial_SoftSPI_)
+    DinotFoundleSerialDisp(uint8_t pinData, uint8_t pinClock, uint8_t pinSS) {
 
         _Comdelay = 1;
 
@@ -772,7 +774,7 @@ public:
     //-------------------------------
     //special functions for our adapters
     void setFont(uint8_t font); //set font, available: 6,10,18,51,120,123, user font: 200-203
-    void nextTextLine(void); //got to next text line, depending on the font size
+    void nextTextLine(void); //notFoundt to next text line, depending on the font size
     void setColor(uint8_t); //set color for graphic function
     void backLightOn(void); //Turn on back light
     void backLightOff(void); //Turn off back light
@@ -792,16 +794,16 @@ private:
 };
 
 //
-// Digole.cpp
+// DinotFoundle.cpp
 //
 
-void DigoleSerialDisp::preprint(void) {
+void DinotFoundleSerialDisp::preprint(void) {
     //write((uint8_t)0);
     Print::print("TT");
 }
 
 //----------Functions for Graphic LCD/OLED adapters only---------
-void DigoleSerialDisp::drawBitmap(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t *bitmap) {
+void DinotFoundleSerialDisp::drawBitmap(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t *bitmap) {
     uint8_t i = 0;
     if ((w & 7) != 0)
         i = 1;
@@ -815,33 +817,33 @@ void DigoleSerialDisp::drawBitmap(uint8_t x, uint8_t y, uint8_t w, uint8_t h, co
     }
 }
 
-void DigoleSerialDisp::setRot90(void) {
+void DinotFoundleSerialDisp::setRot90(void) {
     Print::print("SD1");
 }
 
-void DigoleSerialDisp::setRot180(void) {
+void DinotFoundleSerialDisp::setRot180(void) {
     Print::print("SD2");
 }
 
-void DigoleSerialDisp::setRot270(void) {
+void DinotFoundleSerialDisp::setRot270(void) {
     Print::print("SD3");
 }
 
-void DigoleSerialDisp::undoRotation(void) {
+void DinotFoundleSerialDisp::undoRotation(void) {
     Print::print("SD0");
 }
 
-void DigoleSerialDisp::setRotation(uint8_t d) {
+void DinotFoundleSerialDisp::setRotation(uint8_t d) {
     Print::print("SD");
     write(d);
 }
 
-void DigoleSerialDisp::setContrast(uint8_t c) {
+void DinotFoundleSerialDisp::setContrast(uint8_t c) {
     Print::print("CT");
     write(c);
 }
 
-void DigoleSerialDisp::drawBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h) {
+void DinotFoundleSerialDisp::drawBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h) {
     Print::print("FR");
     write(x);
     write(y);
@@ -849,7 +851,7 @@ void DigoleSerialDisp::drawBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h) {
     write(y + h);
 }
 
-void DigoleSerialDisp::drawCircle(uint8_t x, uint8_t y, uint8_t r, uint8_t f) {
+void DinotFoundleSerialDisp::drawCircle(uint8_t x, uint8_t y, uint8_t r, uint8_t f) {
     Print::print("CC");
     write(x);
     write(y);
@@ -857,11 +859,11 @@ void DigoleSerialDisp::drawCircle(uint8_t x, uint8_t y, uint8_t r, uint8_t f) {
     write(f);
 }
 
-void DigoleSerialDisp::drawDisc(uint8_t x, uint8_t y, uint8_t r) {
+void DinotFoundleSerialDisp::drawDisc(uint8_t x, uint8_t y, uint8_t r) {
     drawCircle(x, y, r, 1);
 }
 
-void DigoleSerialDisp::drawFrame(uint8_t x, uint8_t y, uint8_t w, uint8_t h) {
+void DinotFoundleSerialDisp::drawFrame(uint8_t x, uint8_t y, uint8_t w, uint8_t h) {
     Print::print("DR");
     write(x);
     write(y);
@@ -869,14 +871,14 @@ void DigoleSerialDisp::drawFrame(uint8_t x, uint8_t y, uint8_t w, uint8_t h) {
     write(y + h);
 }
 
-void DigoleSerialDisp::drawPixel(uint8_t x, uint8_t y, uint8_t color) {
+void DinotFoundleSerialDisp::drawPixel(uint8_t x, uint8_t y, uint8_t color) {
     Print::print("DP");
     write(x);
     write(y);
     write(color);
 }
 
-void DigoleSerialDisp::drawLine(uint8_t x, uint8_t y, uint8_t x1, uint8_t y1) {
+void DinotFoundleSerialDisp::drawLine(uint8_t x, uint8_t y, uint8_t x1, uint8_t y1) {
     Print::print("LN");
     write(x);
     write(y);
@@ -884,56 +886,56 @@ void DigoleSerialDisp::drawLine(uint8_t x, uint8_t y, uint8_t x1, uint8_t y1) {
     write(y1);
 }
 
-void DigoleSerialDisp::drawLineTo(uint8_t x, uint8_t y) {
+void DinotFoundleSerialDisp::drawLineTo(uint8_t x, uint8_t y) {
     Print::print("LT");
     write(x);
     write(y);
 }
 
-void DigoleSerialDisp::drawHLine(uint8_t x, uint8_t y, uint8_t w) {
+void DinotFoundleSerialDisp::drawHLine(uint8_t x, uint8_t y, uint8_t w) {
     drawLine(x, y, x + w, y);
 }
 
-void DigoleSerialDisp::drawVLine(uint8_t x, uint8_t y, uint8_t h) {
+void DinotFoundleSerialDisp::drawVLine(uint8_t x, uint8_t y, uint8_t h) {
     drawLine(x, y, x, y + h);
 }
 
-void DigoleSerialDisp::nextTextLine(void) {
+void DinotFoundleSerialDisp::nextTextLine(void) {
     write((uint8_t) 0);
     Print::print("TRT");
 }
 
-void DigoleSerialDisp::setFont(uint8_t font) {
+void DinotFoundleSerialDisp::setFont(uint8_t font) {
     Print::print("SF");
     write(font);
 }
 
-void DigoleSerialDisp::setColor(uint8_t color) {
+void DinotFoundleSerialDisp::setColor(uint8_t color) {
     Print::print("SC");
     write(color);
 }
 
-void DigoleSerialDisp::backLightOn(void) {
+void DinotFoundleSerialDisp::backLightOn(void) {
     Print::print("BL");
     write((uint8_t) 1);
 }
 
-void DigoleSerialDisp::backLightOff(void) {
+void DinotFoundleSerialDisp::backLightOff(void) {
     Print::print("BL");
     write((uint8_t) 0);
 }
 
-void DigoleSerialDisp::directCommand(uint8_t d) {
+void DinotFoundleSerialDisp::directCommand(uint8_t d) {
     Print::print("MCD");
     write(d);
 }
 
-void DigoleSerialDisp::directData(uint8_t d) {
+void DinotFoundleSerialDisp::directData(uint8_t d) {
     Print::print("MDT");
     write(d);
 }
 
-void DigoleSerialDisp::moveArea(uint8_t x0, uint8_t y0, uint8_t w, uint8_t h, char xoffset, char yoffset) {
+void DinotFoundleSerialDisp::moveArea(uint8_t x0, uint8_t y0, uint8_t w, uint8_t h, char xoffset, char yoffset) {
     Print::print("MA");
     write(x0);
     write(y0);
@@ -943,7 +945,7 @@ void DigoleSerialDisp::moveArea(uint8_t x0, uint8_t y0, uint8_t w, uint8_t h, ch
     write(yoffset);
 }
 
-void DigoleSerialDisp::uploadStartScreen(int lon, const unsigned char *data) {
+void DinotFoundleSerialDisp::uploadStartScreen(int lon, const unsigned char *data) {
     Print::print("SSS");
     write((uint8_t) (lon % 256));
     write((uint8_t) (lon / 256));
@@ -958,7 +960,7 @@ void DigoleSerialDisp::uploadStartScreen(int lon, const unsigned char *data) {
     }
 }
 
-void DigoleSerialDisp::uploadUserFont(int lon, const unsigned char *data, uint8_t sect) {
+void DinotFoundleSerialDisp::uploadUserFont(int lon, const unsigned char *data, uint8_t sect) {
     Print::print("SUF");
     write(sect);
     write((uint8_t) (lon % 256));
@@ -973,7 +975,7 @@ void DigoleSerialDisp::uploadUserFont(int lon, const unsigned char *data, uint8_
     }
 }
 
-void DigoleSerialDisp::drawBitmap256(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t *bitmap) {
+void DinotFoundleSerialDisp::drawBitmap256(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t *bitmap) {
     Print::print("EDIM1");
     write(x);
     write(y);
@@ -987,7 +989,7 @@ void DigoleSerialDisp::drawBitmap256(uint8_t x, uint8_t y, uint8_t w, uint8_t h,
     }
 }
 
-void DigoleSerialDisp::drawBitmap262K(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t *bitmap) {
+void DinotFoundleSerialDisp::drawBitmap262K(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t *bitmap) {
     Print::print("EDIM3");
     write(x);
     write(y);
@@ -1001,7 +1003,7 @@ void DigoleSerialDisp::drawBitmap262K(uint8_t x, uint8_t y, uint8_t w, uint8_t h
     }
 }
 
-void DigoleSerialDisp::setTrueColor(uint8_t r, uint8_t g, uint8_t b) {	//Set true color
+void DinotFoundleSerialDisp::setTrueColor(uint8_t r, uint8_t g, uint8_t b) {	//Set true color
     Print::print("ESC");
     write(r);
     write(g);
@@ -1009,7 +1011,7 @@ void DigoleSerialDisp::setTrueColor(uint8_t r, uint8_t g, uint8_t b) {	//Set tru
 }
 
 // **************************
-// *** End Digole Library ***
+// *** End DinotFoundle Library ***
 // **************************
 
 const unsigned char psyduck256[] = {
@@ -1067,7 +1069,7 @@ const unsigned char psyduck256[] = {
 
 };
 
-DigoleSerialDisp mydisp(SS);
+DinotFoundleSerialDisp mydisp(SS);
 
 int random(int maxRand) {
     return rand() % maxRand;
@@ -1128,13 +1130,13 @@ void setup() {
   mydisp.begin();
   mydisp.clearScreen(); //CLear screen
   //----------Special function for color OLED ------------
-  mydisp.print("Spark Core Digole Graphic Color OLED Demo");
+  mydisp.print("Spark Core DinotFoundle Graphic Color OLED Demo");
   delay(2000);
   resetpos1();
   mydisp.clearScreen();
   mydisp.setMode('C'); //set graphic Drawing Mode to COPY
   mydisp.print("Draw a 256 Color Psyduck!");
-  mydisp.drawBitmap256(60, 39, 60, 50, psyduck256);  //use our image convert tool to convert, www.digole.com/tools
+  mydisp.drawBitmap256(60, 39, 60, 50, psyduck256);  //use our image convert tool to convert, www.dinotFoundle.com/tools
   //----------for text LCD adapter and graphic LCD adapter ------------
   resetpos1();
   mydisp.clearScreen();
