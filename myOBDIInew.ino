@@ -169,7 +169,7 @@ void getResponse(void){
     const unsigned long countMax = ULONG_MAX;
   #else
     const unsigned long countMax = 10UL;
-  #endif
+  #endif7
   while(go && count++<countMax){
     //If a character comes in on the serial port, we need to act on it.
     if(Serial1.available() > 0){

@@ -20,13 +20,45 @@ Display OBD-II output to OLED.
                        SparkFun Photon Micro OLED
                       SparkFun UART/FTID OBD-II Shield
   Distributed as-is; no warranty is given.
+
+
+  Reaquirements:
+  Prime:
+  1.  Scantool shall reset diagnostic trouble code DTC nuisance P2002 faults on Mazda '07' Speed3 CAN before they light the MIL.
+  2.  Scantool shall etermine emission readiness for inspection.
+  3.  Scantool shall run entirely off standard diagnostic connector DLC.
+  Secondary:
+  1.  Scantool should record date and operating conditions of any DTCs as soon as they happen that would light MIL.
+  2.  Scantool should have a Cloud Function interface for manual query interruption.
+  3.  Scantool should allow non P2002 DTCs to light MIL.   It may not be possible
+      but at least momentarily while the non P2002 exists, it should lVight MIL.
+  4.  Non P2002 DTCs should be reset by a momentary reset button.  Can always get out
+      the $20 scantool to do this infrequent task.
+  5.  OTA dump of NVM as soon as WiFi available.   Alternatively, USB driven request to
+      CoolTerm (or other simple serial monitor).
+
+  Tasks:
+  1.  12-->5 VDC converter on protoboard.
+  2.  Function that waits for exact Tx response.
+  3.  Rotable NVM storage function.
+  4.  Setup task scheduler:
+      a.  RPM, KPH on 1 sec
+      b.  DTCs on 30 sec, record into NVM only once each startup.
+      c.  NVM storage with DTCs.
+From ELM327 manual:  monitors for RTS or RS232 input.   Eiter interrupts it aborting any
+activity.   After interrupting, software should always wait for either the prompt character('>' or Hex '3E')
+before sending next command.   CR causes repeat of previous.
+Also may have NULL values = 00 ('\0') that should be continued on.
 */
 //#include "application.h"
 SYSTEM_THREAD(ENABLED);      // Make sure heat system code always run regardless of network status
-#define TEST_SERIAL
+//#define TEST_SERIAL
 #include "SparkFunMicroOLED.h"  // Include MicroOLED library
 #include "math.h"
 void display(const uint8_t x, const uint8_t y, const String str, const uint8_t clear=0, const uint8_t type=0, const uint8_t clearA=0);
+int rxFlushToPrompt(const char pchar);
+int ping(const String cmd);
+void pingJump(const String cmd, const String val);
 MicroOLED oled;
 //SYSTEM_MODE(MANUAL);
 
@@ -41,90 +73,97 @@ int verbose       = 5;  // Debugging Serial.print as much as you can tolerate.  
 
 void setup()
 {
+  WiFi.off();
   Serial.begin(9600);
   Serial1.begin(9600);
-  delay(2000);
-
   oled.begin();    // Initialize the OLED
-  display(0, 0, "WAIT", 1, 1, 1);
+
+//TODO enumerated type for last three display argumenets.   Add delay to arguments (before first optional)
+  delay(1500);  display(0, 0, "WAIT", 1, 0, 1);  delay(500);
 
   //Reset the OBD-II-UART
-  if (Serial1.available()) Serial1.println("ATZ");
+  Serial1.println("ATZ");
+  getResponse();
+
+  display(0, 1, "rxData=" + String(rxData), 0, 0);
   delay(2000);
-  Serial1.flush();
-  delay(1000);
 }
 
 
 void loop(){
-  if (verbose>4)
-  {
-    display(0, 0, "begin", 1, 1);
-    delay(1000);
-  }
-  //Delete any data that may be in the serial port before we begin.
-  //Serial1.flush();
-  if (verbose>3)
-  {
-    display(0, 0, "Tx:010D", 1);
-  }
-  //Query the OBD-II-UART for the Vehicle Speed
-  Serial1.println("010D");
-  delay(1000);
-  getResponse();
-  delay(1000);
+  if (verbose>4) display(0, 0, "begin", 1, 1);
+
+  // Speed
   #ifdef TEST_SERIAL   // Jumper Tx to Rx
-    if (verbose>3)
-    {
-      display(0, 0, "Tx:60", 1);
-      delay(1000);
-    }
-    //Serial1.flush();
-    Serial1.println("60");
-  #endif
-  getResponse();
-  delay(1000);
-  #ifndef TEST_SERIAL
-    vehicleSpeed = strtol(&rxData[6],0,16);
-  #else
+    pingJump("010D", "60");
     vehicleSpeed = atol(rxData);
-  #endif
-  display(0, 1, String(vehicleSpeed)+" kph");
-  delay(1000);
-
-  //Delete any data that may be left over in the serial port.
-  //Serial1.flush();
-  //Query the OBD-II-UART for the Vehicloe rpm.
-  if (verbose>3)
-  {
-    display(0, 0, "Tx:010C", 1);
+    display(0, 2, String(vehicleSpeed)+" kph");
     delay(1000);
-  }
-  Serial1.println("010C");
-  getResponse();
-  delay(1000);
-  #ifdef TEST_SERIAL   //   Jumper Tx to Rx
-    if (verbose>3)
-    {
-      display(0, 0, "Tx:900", 1);
-      delay(1000);
-    }
-    //Serial1.flush();
-    Serial1.println("900");
-  #endif
-  getResponse();
-  delay(1000);
-  //NOTE: RPM data is two bytes long, and delivered in 1/4 RPM from the OBD-II-UART
-  #ifndef TEST_SERIAL
-    vehicleRPM = ((strtol(&rxData[6],0,16)*256)+strtol(&rxData[9],0,16))/4;
   #else
-    vehicleRPM = atol(rxData);
+    if (ping("010D") == 0)
+    {
+      vehicleSpeed = strtol(&rxData[6],0,16);
+      display(0, 2, String(vehicleSpeed)+" kph");
+    }
   #endif
-  display(0, 1, String(vehicleRPM)+" rpm");
 
-  //Give the OBD bus a rest
+  // RPM
+  #ifdef TEST_SERIAL   // Jumper Tx to Rx
+    pingJump("010C", "900");
+    vehicleRPM = atol(rxData);
+    display(0, 2, String(vehicleRPM)+" rpm");
+    delay(1000);
+  #else
+    if (ping("010C") == 0)
+    {
+      //NOTE: RPM data is two bytes long, and delivered in 1/4 RPM from the OBD-II-UART
+      vehicleRPM = ((strtol(&rxData[6],0,16)*256)+strtol(&rxData[9],0,16))/4;
+      display(0, 2, String(vehicleRPM)+" rpm");
+    }
+  #endif
+}
+
+
+
+// boilerplate jumper driver
+void pingJump(const String cmd, const String val)
+{
+  int notConnected = 0;
+  if (verbose>3) display(0, 0, "Tx:" + cmd, 1);
   delay(1000);
+  Serial1.println(cmd);
+  delay(1000);
+  getResponse();
+  delay(1000);
+  if (verbose>3) display(0, 0, "Tx:" + val, 1);
+  delay(1000);
+  Serial1.println(val);
+  notConnected = getResponse();
+  if (notConnected)
+  {
+    display(0, 0, "No conn>", 1, 1);
+    int count = 0;
+    while (!Serial.available() && count++<5) delay(1000);
+    while (!Serial.read());
+  }
+  delay(1000);
+}
 
+// Boilerplate driver
+int ping(const String cmd)
+{
+  int notConnected = 0;
+  if (verbose>3) display(0, 0, "Tx:" + cmd, 1);
+  notConnected = rxFlushToPrompt('>');
+  if (notConnected)
+  {
+    display(0, 0, "No conn>", 1, 1);
+    int count = 0;
+    while (!Serial.available() && count++<5) delay(1000);
+    while (!Serial.read());
+  }
+  Serial1.println(cmd);
+  return (getResponse());
 }
 
 
@@ -140,12 +179,9 @@ void display(const uint8_t x, const uint8_t y, const String str, const uint8_t c
   oled.display();
 }
 
-
-//The getResponse function collects incoming data from the UART into the rxData buffer
-// and only exits when a carriage return character is seen. Once the carriage return
-// string is detected, the rxData buffer is null terminated (so we can treat it as a string)
-// and the rxData index is reset to 0 so that the next string can be copied.
-void getResponse(void){
+// Spin until pchar, 0 if found, 1 if fail
+int rxFlushToPrompt(const char pchar)
+{
   char inChar=0;
   if (verbose>4){
     Serial.printf("Rx:");
@@ -156,48 +192,102 @@ void getResponse(void){
   }
   //Keep reading characters until we get a carriage return
   bool go = true;
-  uint8_t count = 0;
-  while(go && count++<10){
-    //If a character comes in on the serial port, we need to act on it.
-    if(Serial1.available() > 0){
-      //Start by checking if we've received the end of message character ('\r').
-      if(Serial1.peek() == '\r'){
-        //Clear the Serial1 buffer
-        inChar=Serial1.read();
-        //Serial1.read();   // empty the buffer of lf
-        rxData[rxIndex++]='\0';
-        //Reset the buffer index so that the next character goes back at the beginning of the string.
-        rxIndex=0;
+  int count = 0;
+  while (go && rxIndex<20 && ++count<45)
+  {
+    if(Serial1.available() > 0)
+    {
+      if(Serial1.peek() == pchar){
+        inChar  = Serial1.read();    // Clear buffer
         if (verbose>4){
           Serial.printf(";\n");
           oled.printf(";");
-          oled.display();  // Display what's in the buffer (splashscreen)
+          oled.display();
         }
         go = false;
       }
-      //If we didn't get the end of message character, just add the new character to the string.
-      else{
-        //Get the new character from the Serial1 port.
+      else    // New char
+      {
         inChar = Serial1.read();
-        if (isspace(inChar)) continue;  // Strip line feeds left from previous \n-\r
-        if (verbose>4){
-          Serial.printf("%c", inChar);
+        if      (isspace(inChar)) continue;   // Strip line feeds left from previous \n-\r
+        else if (inChar == '\0')  continue;   // Strip delimiters
+        else if (verbose>4){
+          Serial.printf("<%c>", inChar);
           oled.printf("%c", inChar);
-          oled.display();  // Display what's in the buffer (splashscreen)
-          delay(100);
+          oled.display();
+          //delay(100);
         }
-        //Add the new character to the string, and increment the index variable.
-        rxData[rxIndex++] = inChar;
       }
     }
     else{   // !available
       if (verbose>4){
-        delay(1000);
-        oled.printf(".");
-        oled.display();  // Display what's in the buffer (splashscreen)
+        //delay(1000);
+        Serial.printf(",");
+        oled.printf(",");
+        oled.display();
       }
     }
   }
+  return (go);
+}
+
+
+//The getResponse function collects incoming data from the UART into the rxData buffer
+// and only exits when a carriage return character is seen. Once the carriage return
+// string is detected, the rxData buffer is null terminated (so we can treat it as a string)
+// and the rxData index is reset to 0 so that the next string can be copied.
+int getResponse(void){
+  char inChar=0;
+  if (verbose>4){
+    Serial.printf("Rx:");
+    oled.setFontType(0);
+    oled.setCursor(0, oled.getFontHeight());
+    oled.print("Rx:");
+    oled.display();
+  }
+  //Keep reading characters until we get a carriage return
+  bool go = true;
+  int count = 0;
+  while (go && rxIndex<20 && ++count<45)
+  {
+    if(Serial1.available() > 0)
+    {
+      if(Serial1.peek() == '\r'){
+        inChar  = Serial1.read();    // Clear buffer
+        rxData[rxIndex]='\0';
+        rxIndex = 0;                // Reset the buffer for next pass
+        if (verbose>4){
+          Serial.printf(";\n");
+          oled.printf(";");
+          oled.display();
+        }
+        go = false;
+      }
+      else    // New char
+      {
+        inChar = Serial1.read();
+        if      (isspace(inChar)) continue;   // Strip line feeds left from previous \n-\r
+        else if (inChar == '>')   continue;   // Strip prompts
+        else if (inChar == '\0')  continue;   // Strip delimiters
+        else rxData[rxIndex++] = inChar;
+        if (verbose>4){
+          Serial.printf("[%c]", inChar);
+          oled.printf("%c", inChar);
+          oled.display();
+          //delay(100);
+        }
+      }
+    }
+    else{   // !available
+      if (verbose>4){
+        //delay(1000);
+        Serial.printf(".");
+        oled.printf(".");
+        oled.display();
+      }
+    }
+  }
+  return (go);
 }
 
 
