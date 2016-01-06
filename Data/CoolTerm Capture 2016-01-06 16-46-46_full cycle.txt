@@ -1,0 +1,1945 @@
+Rx:ATZ;
+rxData=ATZ
+begin
+Rx:ELM327v1.3a>;
+Tx:010D
+Rx:010D;
+Rx:No conn>
+Rx:SEARCHING...410D00>;
+Tx:010C
+Rx:010C;
+Rx:410C1AB5;
+1709 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D00;
+0 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1A9A;
+1702 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D00;
+0 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1A28;
+1674 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D00;
+0 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1A17;
+1669 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D00;
+0 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1A0E;
+1667 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D00;
+0 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1A49;
+1682 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D00;
+0 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1BB1;
+1772 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D00;
+0 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1A1F;
+1671 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D00;
+0 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C14AF;
+1323 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D01;
+1 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C12E7;
+1209 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D01;
+1 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1190;
+1124 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D02;
+2 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1001;
+1024 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D04;
+4 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1021;
+1032 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D05;
+5 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0F47;
+977 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D06;
+6 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0DDD;
+887 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D07;
+7 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0DA9;
+874 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D08;
+8 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0F6E;
+987 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D09;
+9 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C10AB;
+1066 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D09;
+9 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1182;
+1120 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0A;
+10 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C12C4;
+1201 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0A;
+10 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C13AD;
+1259 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0B;
+11 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C14EB;
+1338 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0C;
+12 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C15D5;
+1397 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0C;
+12 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1650;
+1428 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0C;
+12 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C16DD;
+1463 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0D;
+13 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C175F;
+1495 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0D;
+13 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1768;
+1498 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0D;
+13 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C17D4;
+1525 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0D;
+13 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C189F;
+1575 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0E;
+14 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C18F2;
+1596 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0E;
+14 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1932;
+1612 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0E;
+14 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C191F;
+1607 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0E;
+14 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C18CF;
+1587 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0E;
+14 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C17FB;
+1534 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0D;
+13 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1786;
+1505 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0D;
+13 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1722;
+1480 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0D;
+13 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C16EE;
+1467 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0D;
+13 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C176B;
+1498 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0D;
+13 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1816;
+1541 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0D;
+13 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C18F6;
+1597 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0E;
+14 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1A02;
+1664 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0E;
+14 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1ADC;
+1719 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0F;
+15 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1BE9;
+1786 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D10;
+16 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1D64;
+1881 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D11;
+17 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1F71;
+2012 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D12;
+18 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C216A;
+2138 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D13;
+19 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C22C3;
+2224 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D13;
+19 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C2130;
+2124 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D14;
+20 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1EA5;
+1961 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D14;
+20 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1C15;
+1797 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D14;
+20 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C179C;
+1511 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D16;
+22 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C19CD;
+1651 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D17;
+23 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1BB3;
+1772 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D19;
+25 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1E26;
+1929 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D1B;
+27 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C204B;
+2066 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D1D;
+29 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C2219;
+2182 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D1E;
+30 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C23F8;
+2302 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D20;
+32 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C25B8;
+2414 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D21;
+33 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C26C7;
+2481 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D22;
+34 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C2845;
+2577 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D23;
+35 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C2961;
+2648 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D24;
+36 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C2A23;
+2696 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D25;
+37 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C2AED;
+2747 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D26;
+38 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C2B88;
+2786 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D26;
+38 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C2BCF;
+2803 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D26;
+38 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C279E;
+2535 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D25;
+37 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1F2B;
+1994 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D21;
+33 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1CA5;
+1833 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D1E;
+30 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C196D;
+1627 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D19;
+25 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C15FB;
+1406 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D16;
+22 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C14A5;
+1321 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D13;
+19 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C12E0;
+1208 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0F;
+15 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C11B2;
+1132 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0D;
+13 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1159;
+1110 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0C;
+12 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C10FB;
+1086 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0B;
+11 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1085;
+1057 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0A;
+10 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C11DA;
+1142 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D09;
+9 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C11F1;
+1148 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D09;
+9 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1168;
+1114 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D08;
+8 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C118D;
+1123 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D06;
+6 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1117;
+1093 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D05;
+5 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C111A;
+1094 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D02;
+2 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1020;
+1032 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D00;
+0 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C113B;
+1102 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D00;
+0 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C12E8;
+1210 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D02;
+2 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1537;
+1357 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D04;
+4 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C14C1;
+1328 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D05;
+5 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1737;
+1485 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D06;
+6 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C157F;
+1375 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D07;
+7 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1771;
+1500 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D08;
+8 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1872;
+1564 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D08;
+8 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1735;
+1485 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D08;
+8 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C15BE;
+1391 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D06;
+6 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1424;
+1289 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D05;
+5 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C11C6;
+1137 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D02;
+2 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C106D;
+1051 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D00;
+0 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0F5A;
+982 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D00;
+0 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C13DB;
+1270 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D01;
+1 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1707;
+1473 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D03;
+3 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1545;
+1361 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D06;
+6 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C12CE;
+1203 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D09;
+9 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1367;
+1241 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0C;
+12 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C15FA;
+1406 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0E;
+14 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1B39;
+1742 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D10;
+16 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C20D6;
+2101 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D12;
+18 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C243C;
+2319 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D15;
+21 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C2853;
+2580 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D17;
+23 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C2A0C;
+2691 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D18;
+24 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C26E2;
+2488 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D18;
+24 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1D50;
+1876 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D18;
+24 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1B17;
+1733 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D18;
+24 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1C34;
+1805 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D19;
+25 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1EB8;
+1966 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D1B;
+27 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C20D1;
+2100 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D1D;
+29 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C23AC;
+2283 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D20;
+32 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C26DB;
+2486 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D23;
+35 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C294B;
+2642 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D25;
+37 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C2B73;
+2780 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D26;
+38 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C2BB2;
+2796 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D27;
+39 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C2746;
+2513 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D26;
+38 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1DD2;
+1908 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D25;
+37 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1882;
+1568 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D25;
+37 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C15D6;
+1397 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D24;
+36 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C1375;
+1245 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D22;
+34 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C10B3;
+1068 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D1F;
+31 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0F5C;
+983 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D1C;
+28 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E4F;
+915 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D1A;
+26 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E5C;
+919 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D19;
+25 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E0D;
+899 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D18;
+24 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0DAA;
+874 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D17;
+23 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0DCE;
+883 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D16;
+22 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E03;
+896 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D15;
+21 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E13;
+900 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D14;
+20 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0DD6;
+885 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D14;
+20 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0DEF;
+891 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D14;
+20 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0DE4;
+889 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D13;
+19 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0DD5;
+885 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D13;
+19 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0DF9;
+894 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D13;
+19 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E1F;
+903 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D13;
+19 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0DE7;
+889 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D12;
+18 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0DA8;
+874 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D12;
+18 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0D45;
+849 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D12;
+18 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0D6E;
+859 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D12;
+18 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0DAD;
+875 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D12;
+18 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0D9B;
+870 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D11;
+17 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0D9A;
+870 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D11;
+17 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E26;
+905 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D10;
+16 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E80;
+928 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D10;
+16 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E29;
+906 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0F;
+15 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E32;
+908 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0E;
+14 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E4E;
+915 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0C;
+12 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E15;
+901 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D0B;
+11 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E6D;
+923 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D09;
+9 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E63;
+920 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D08;
+8 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E34;
+909 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D06;
+6 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E67;
+921 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D05;
+5 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E89;
+930 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D05;
+5 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E23;
+904 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D04;
+4 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0F6C;
+987 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D03;
+3 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C13A9;
+1258 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D04;
+4 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0FD2;
+1012 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D05;
+5 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0DEE;
+891 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D06;
+6 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0F17;
+965 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D05;
+5 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C101C;
+1031 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D05;
+5 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0F8A;
+994 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D04;
+4 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E99;
+934 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D04;
+4 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E8C;
+931 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D03;
+3 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E5A;
+918 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D03;
+3 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E7F;
+927 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D02;
+2 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E4E;
+915 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D01;
+1 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E22;
+904 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D00;
+0 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E65;
+921 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D00;
+0 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E5D;
+919 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D00;
+0 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E4B;
+914 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D00;
+0 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E86;
+929 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:410D00;
+0 kph
+Rx:>;
+Tx:010C
+Rx:010C;
+Rx:410C0E57;
+917 rpm
+begin
+Rx:>;
+Tx:010D
+Rx:010D;
+Rx:No conn>
+Rx:NODATA>;
+Tx:010C
+Rx:01

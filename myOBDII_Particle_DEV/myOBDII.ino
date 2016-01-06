@@ -102,8 +102,10 @@ void loop(){
   #else
     if (ping("010D") == 0)
     {
-      vehicleSpeed = strtol(&rxData[6],0,16);
+      //vehicleSpeed = strtol(&rxData[6],0,16);
+      vehicleSpeed = strtol(&rxData[4], 0, 16);
       display(0, 2, String(vehicleSpeed)+" kph");
+      delay(100);
     }
   #endif
 
@@ -117,8 +119,10 @@ void loop(){
     if (ping("010C") == 0)
     {
       //NOTE: RPM data is two bytes long, and delivered in 1/4 RPM from the OBD-II-UART
-      vehicleRPM = ((strtol(&rxData[6],0,16)*256)+strtol(&rxData[9],0,16))/4;
+      //vehicleRPM = ((strtol(&rxData[6],0,16)*256)+strtol(&rxData[9],0,16))/4;
+      vehicleRPM = strtol(&rxData[4], 0, 16)/4;
       display(0, 2, String(vehicleRPM)+" rpm");
+      delay(100);
     }
   #endif
 }
@@ -156,7 +160,7 @@ int ping(const String cmd)
   int notConnected = rxFlushToChar('>');
   if (verbose>3) display(0, 0, "Tx:" + cmd, 1);
   Serial1.println(cmd + '\0');
-  notConnected = getResponse()  || notConnected;
+  notConnected = rxFlushToChar('\r')  || notConnected;
   notConnected = getResponse()  || notConnected;
   if (notConnected)
   {
@@ -202,8 +206,8 @@ int rxFlushToChar(const char pchar)
       if(Serial1.peek() == pchar){
         inChar  = Serial1.read();    // Clear buffer
         if (verbose>4){
-          Serial.printf(";\n");
-          oled.printf(";");
+          Serial.printf("%c;\n", inChar);
+          oled.printf("%c;", inChar);
           oled.display();
         }
         notFound = false;
@@ -214,7 +218,9 @@ int rxFlushToChar(const char pchar)
         if      (isspace(inChar)) continue;   // Strip line feeds left from previous \n-\r
         else if (inChar == '\0')  continue;   // Strip delimiters
         else if (verbose>4){
-          Serial.printf("<%c>", inChar);
+          if (verbose>5) Serial.printf("<");
+          Serial.printf("%c", inChar);
+          if (verbose>5) Serial.printf("<");
           oled.printf("%c", inChar);
           oled.display();
           //delay(100);
@@ -222,7 +228,7 @@ int rxFlushToChar(const char pchar)
       }
     }
     else{   // !available
-      if (verbose>4){
+      if (verbose>5){
         //delay(1000);
         Serial.printf(",");
         oled.printf(",");
@@ -273,7 +279,9 @@ int getResponse(void){
         else if (inChar == '\0')  continue;   // Strip delimiters
         else rxData[rxIndex++] = inChar;
         if (verbose>4){
-          Serial.printf("[%c]", inChar);
+          if (verbose>5) Serial.printf("[");
+          Serial.printf("%c", inChar);
+          if (verbose>5) Serial.printf("]");
           oled.printf("%c", inChar);
           oled.display();
           //delay(100);
@@ -281,7 +289,7 @@ int getResponse(void){
       }
     }
     else{   // !available
-      if (verbose>4){
+      if (verbose>5){
         //delay(1000);
         Serial.printf(".");
         oled.printf(".");
@@ -291,9 +299,6 @@ int getResponse(void){
   }
   return (notFound);
 }
-
-
-
 
 
 
