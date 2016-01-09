@@ -60,7 +60,7 @@ Display OBD-II output to OLED.
 //#pragma SPARK_NO_PREPROCESSOR
 //
 // Standard
-//#include "application.h"
+#include "application.h"
 SYSTEM_THREAD(ENABLED);      // Make sure heat system code always run regardless of network status
 //
 // Test features usually commented
@@ -82,6 +82,9 @@ void  display(const uint8_t x, const uint8_t y, const String str, const uint8_t 
 int   rxFlushToChar(const char pchar);
 int   ping(const String cmd);
 int   pingJump(const String cmd, const String val);
+int   getResponse(void);
+int   pingMulti(const String cmd);
+int pingJumpMulti(const String cmd, const String* valArray, const uint8_t n);
 MicroOLED oled;
 //SYSTEM_MODE(MANUAL);
 
@@ -92,7 +95,7 @@ char rxIndex      = 0;
 //Variables to hold the speed and RPM data.
 int vehicleSpeed  = 0;  // kph
 int vehicleRPM    = 0;  // rpm
-int verbose       = 5;  // Debugging Serial.print as much as you can tolerate.  0=none
+int verbose       = 6;  // Debugging Serial.print as much as you can tolerate.  0=none
 
 
 void setup()
@@ -115,12 +118,15 @@ void setup()
 
 
 void loop(){
-  if (verbose>4) display(0, 0, "begin", 1, 1);
-
+  #ifdef TEST_SERIAL   // Jumper Tx to Rx
+    if (verbose>4) display(0, 0, "JUMPER", 1, 1);
+  #else
+  if (verbose>4) display(0, 0, "ENGINE", 1, 1);
+  #endif
 
   // Codes
   #ifdef TEST_SERIAL   // Jumper Tx to Rx
-    pingJumpMulti("03", {"60", "70"});
+    pingJumpMulti("03", {"60", "70"}, 2);
     long code = atol(rxData);
     display(0, 2, String(code));
     delay(1000);
@@ -170,7 +176,7 @@ void loop(){
 }
 
 // boilerplate jumper driver
-int pingJumpMulti(const String cmd, const String* valArray)
+int pingJumpMulti(const String cmd, const String* valArray, const uint8_t n)
 {
   if (verbose>3) display(0, 0, "Tx:" + cmd, 1);
   delay(1000);
@@ -179,7 +185,7 @@ int pingJumpMulti(const String cmd, const String* valArray)
   //getResponse();
   int notConnected = rxFlushToChar('\r');
   delay(1000);
-  for ( int i=0; i<n; i+++ )
+  for ( int i=0; i<n; i++ )
   {
     if (verbose>3) display(0, 0, "Tx:" + valArray[i], 1);
     delay(1000);
@@ -309,7 +315,7 @@ int rxFlushToChar(const char pchar)
         else if (verbose>4){
           if (verbose>5) Serial.printf("<");
           Serial.printf("%c", inChar);
-          if (verbose>5) Serial.printf("<");
+          if (verbose>5) Serial.printf(">");
           oled.printf("%c", inChar);
           oled.display();
           //delay(100);
@@ -392,7 +398,7 @@ int getResponse(void){
 
 
 
-
+/*
 void textExamples()
 {
   printTitle("Text!", 1);
@@ -531,7 +537,7 @@ void printTitle(String title, int font)
 
 
 
-
+*/
 
 
 
