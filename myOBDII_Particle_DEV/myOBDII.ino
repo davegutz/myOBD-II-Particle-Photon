@@ -1,26 +1,25 @@
 /*
 OBD-II Interface
 Display OBD-II output to OLED.
-  OLED Connections:
-    MicroOLED ------------- Photon
-      GND ------------------- GND
-      VDD ------------------- 3.3V (VCC)
-    D1/MOSI ----------------- A5 (don't change)
-    D0/SCK ------------------ A3 (don't change)
-      D2
-      D/C ------------------- D6 (can be any digital pin)
-      RST ------------------- D7 (can be any digital pin)
-      CS  ------------------- A2 (can be any analog pin)
-  UART Connections:
-    UART/FTID --------------- Photon
-      GND ------------------- GND
-      Tx  ------------------- Rx (Serial1)
-      Rx  ------------------- Tx (Serial1)
-    Hardware Platform: Particle Photon
-                       SparkFun Photon Micro OLED
-                      SparkFun UART/FTID OBD-II Shield
-  Distributed as-is; no warranty is given.
 
+    OLED Connections:
+      MicroOLED ------------- Photon
+        GND ------------------- GND
+        VDD ------------------- 3.3V (VCC)
+      D1/MOSI ----------------- A5 (don't change)
+      D0/SCK ------------------ A3 (don't change)
+        D2
+        D/C ------------------- D6 (can be any digital pin)
+        RST ------------------- D7 (can be any digital pin)
+        CS  ------------------- A2 (can be any digital pin)
+    UART Connections (with FT231X interface mounted):
+      UART/FT231X --------------- Photon
+        GND ------------------- GND
+        Tx  ------------------- Rx (Serial1)
+        Rx  ------------------- Tx (Serial1)
+      Hardware Platform: Particle Photon
+                         SparkFun Photon Micro OLED
+                         SparkFun UART/FTID OBD-II Shield (FT213X)
 
   Reaquirements:
   Prime:
@@ -37,7 +36,7 @@ Display OBD-II output to OLED.
   5.  OTA dump of NVM as soon as WiFi available.   Alternatively, USB driven request to
       CoolTerm (or other simple serial monitor).
 
-  Tasks:
+  Tasks TODO:
   1.  12-->5 VDC converter on protoboard.
   2.  Function that waits for exact Tx response.
   3.  Rotable NVM storage function.
@@ -45,14 +44,38 @@ Display OBD-II output to OLED.
       a.  RPM, KPH on 1 sec
       b.  DTCs on 30 sec, record into NVM only once each startup.
       c.  NVM storage with DTCs.
-From ELM327 manual:  monitors for RTS or RS232 input.   Eiter interrupts it aborting any
-activity.   After interrupting, software should always wait for either the prompt character('>' or Hex '3E')
-before sending next command.   CR causes repeat of previous.
-Also may have NULL values = 00 ('\0') that should be continued on.
+  From ELM327 manual:  monitors for RTS or RS232 input.   Eiter interrupts it aborting any
+  activity.   After interrupting, software should always wait for either the prompt character('>' or Hex '3E')
+  before sending next command.   CR causes repeat of previous.
+  Also may have NULL values = 00 ('\0') that should be continued on.
+
+  Revision history:
+  09-Jan-2016   Dave Gutz   Created
+
+  Distributed as-is; no warranty is given.
 */
+
+
+//Sometimes useful for debugging
+//#pragma SPARK_NO_PREPROCESSOR
+//
+// Standard
 //#include "application.h"
 SYSTEM_THREAD(ENABLED);      // Make sure heat system code always run regardless of network status
+//
+// Test features usually commented
 //#define TEST_SERIAL
+//
+// Disable flags if needed.  Usually commented
+// #define DISABLE
+//
+// Usually defined
+// #define USUALLY
+//
+// Constants always defined
+// #define CONSTANT
+//
+// Dependent includes.   Easier to debug code if remove unused include files
 #include "SparkFunMicroOLED.h"  // Include MicroOLED library
 #include "math.h"
 void  display(const uint8_t x, const uint8_t y, const String str, const uint8_t clear=0, const uint8_t type=0, const uint8_t clearA=0);
@@ -62,6 +85,7 @@ int   pingJump(const String cmd, const String val);
 MicroOLED oled;
 //SYSTEM_MODE(MANUAL);
 
+// Global variables
 //This is a character buffer that will store the data from the serial port
 char rxData[20];
 char rxIndex      = 0;
@@ -92,6 +116,24 @@ void setup()
 
 void loop(){
   if (verbose>4) display(0, 0, "begin", 1, 1);
+
+
+  // Codes
+  #ifdef TEST_SERIAL   // Jumper Tx to Rx
+    pingJumpMulti("03", {"60", "70"});
+    long code = atol(rxData);
+    display(0, 2, String(code));
+    delay(1000);
+  #else
+    if (pingMulti("03") == 0)
+    {
+      long code = strtol(&rxData[2], 0, 16);   // uses 2 not 4
+      display(0, 2, String(code));
+      delay(100);
+    }
+  #endif
+
+
 
   // Speed
   #ifdef TEST_SERIAL   // Jumper Tx to Rx
@@ -127,6 +169,34 @@ void loop(){
   #endif
 }
 
+// boilerplate jumper driver
+int pingJumpMulti(const String cmd, const String* valArray)
+{
+  if (verbose>3) display(0, 0, "Tx:" + cmd, 1);
+  delay(1000);
+  Serial1.println(cmd);
+  delay(1000);
+  //getResponse();
+  int notConnected = rxFlushToChar('\r');
+  delay(1000);
+  for ( int i=0; i<n; i+++ )
+  {
+    if (verbose>3) display(0, 0, "Tx:" + valArray[i], 1);
+    delay(1000);
+    Serial1.println(valArray[i]);
+    // TODO this gets last response only
+    notConnected = getResponse() || notConnected;
+    if (notConnected)
+    {
+      display(0, 0, "No conn>", 1, 1);
+      int count = 0;
+      while (!Serial.available() && count++<5) delay(1000);
+      while (!Serial.read());
+    }
+    delay(1000);
+  }
+  return(notConnected);
+}
 
 
 // boilerplate jumper driver
@@ -153,6 +223,25 @@ int pingJump(const String cmd, const String val)
   delay(1000);
   return(notConnected);
 }
+
+// Boilerplate driver
+int pingMulti(const String cmd)
+{
+  int notConnected = rxFlushToChar('>');
+  if (verbose>3) display(0, 0, "Tx:" + cmd, 1);
+  Serial1.println(cmd + '\0');
+  notConnected = rxFlushToChar('\r')  || notConnected;
+  notConnected = getResponse()  || notConnected;
+  if (notConnected)
+  {
+    display(0, 0, "No conn>", 1, 1);
+    int count = 0;
+    while (!Serial.available() && count++<5) delay(1000);
+    while (!Serial.read());
+  }
+  return (notConnected);
+}
+
 
 // Boilerplate driver
 int ping(const String cmd)
