@@ -83,6 +83,7 @@ int   rxFlushToChar(const char pchar);
 int   ping(const String cmd);
 int   pingJump(const String cmd, const String val);
 int   getResponse(void);
+int   parseCodes(const char *rxData);
 MicroOLED oled;
 //SYSTEM_MODE(MANUAL);
 
@@ -97,42 +98,7 @@ uint8_t ncodes    = 0;
 //Variables to hold the speed and RPM data.
 int vehicleSpeed  = 0;  // kph
 int vehicleRPM    = 0;  // rpm
-int verbose       = 5;  // Debugging Serial.print as much as you can tolerate.  0=none
-
-// Parse the OBD-II long string of codes returned by UART.
-int parseCodes(const char *rxData)
-{
-Serial.printf("rxD=%s\n", rxData);
-    int n = strlen(rxData);
-    if ( n < 8 )
-    {
-      ncodes = 0;
-      return(0);
-    }
-    char numC[3];
-    numC[0] = rxData[2];
-    numC[1] = rxData[3];
-    numC[2] = '\0';
-    ncodes = strtol(numC, NULL, 10);
-    if ( ncodes*4>(n-4) || ncodes>100 )
-    {
-      ncodes = 0;
-      return(0);
-    }
-    int i = 0;
-    int j = 4;
-    char C[5];
-    while ( i < ncodes )
-    {
-      C[0] = rxData[j++];
-      C[1] = rxData[j++];
-      C[2] = rxData[j++];
-      C[3] = rxData[j++];
-      C[4] = '\0';
-      codes[i++] = strtol(C, NULL, 10);
-    }
-    return(ncodes);
-}
+int verbose       = 3;  // Debugging Serial.print as much as you can tolerate.  0=none
 
 
 void setup()
@@ -147,9 +113,9 @@ void setup()
 
   //Reset the OBD-II-UART
   Serial1.println("ATZ");
+  delay(1000);
   getResponse();
-
-  display(0, 1, "rxData=" + String(rxData), 0, 0);
+  display(0, 1, String(rxData), 0, 0);
   delay(2000);
 }
 
@@ -169,7 +135,6 @@ void loop(){
     sprintf(serCode, "43 01 20 02");
     pingJump("03", serCode);
     int nActive = parseCodes(rxData);
-Serial.printf("nActive=%d\n", nActive);
     for ( int i=0; i<nActive; i++ )
     {
       activeCode[i] = codes[i];
@@ -255,6 +220,42 @@ Serial.printf("nActive=%d\n", nActive);
 }
 
 
+
+// Parse the OBD-II long string of codes returned by UART.
+int parseCodes(const char *rxData)
+{
+    int n = strlen(rxData);
+    if ( n < 8 )
+    {
+      ncodes = 0;
+      return(0);
+    }
+    char numC[3];
+    numC[0] = rxData[2];
+    numC[1] = rxData[3];
+    numC[2] = '\0';
+    ncodes = strtol(numC, NULL, 10);
+    if ( ncodes*4>(n-4) || ncodes>100 )
+    {
+      ncodes = 0;
+      return(0);
+    }
+    int i = 0;
+    int j = 4;
+    char C[5];
+    while ( i < ncodes )
+    {
+      C[0] = rxData[j++];
+      C[1] = rxData[j++];
+      C[2] = rxData[j++];
+      C[3] = rxData[j++];
+      C[4] = '\0';
+      codes[i++] = strtol(C, NULL, 10);
+    }
+    return(ncodes);
+}
+
+
 // boilerplate jumper driver
 int pingJump(const String cmd, const String val)
 {
@@ -262,12 +263,12 @@ int pingJump(const String cmd, const String val)
   delay(1000);
   Serial1.println(cmd);
   delay(1000);
-  //getResponse();
+  //int notConnected = getResponse();
   int notConnected = rxFlushToChar('\r');
   delay(1000);
   if (verbose>3) display(0, 0, "Tx:" + val, 1);
-  delay(1000);
   Serial1.println(val);
+  delay(1000);
   notConnected = getResponse() || notConnected;
   if (notConnected)
   {
