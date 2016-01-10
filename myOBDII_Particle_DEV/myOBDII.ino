@@ -1,6 +1,6 @@
 /*
-OBD-II Interface
-Display OBD-II output to OLED.
+OBD-II Interface Scantool
+Display  CAN-based OBD-II output to OLED.   Tested on Mazdaspeed3 '07'.
 
     OLED Connections:
       MicroOLED ------------- Photon
@@ -37,10 +37,9 @@ Display OBD-II output to OLED.
       CoolTerm (or other simple serial monitor).
 
   Tasks TODO:
-  1.  12-->5 VDC converter on protoboard.
-  2.  Function that waits for exact Tx response.
-  3.  Rotable NVM storage function.
-  4.  Setup task scheduler:
+  1.  Function that waits for exact Tx response.
+  2.  Rotable NVM storage function.
+  3.  Setup task scheduler:
       a.  RPM, KPH on 1 sec
       b.  DTCs on 30 sec, record into NVM only once each startup.
       c.  NVM storage with DTCs.
@@ -64,7 +63,7 @@ Display OBD-II output to OLED.
 SYSTEM_THREAD(ENABLED);      // Make sure heat system code always run regardless of network status
 //
 // Test features usually commented
-//#define TEST_SERIAL
+#define TEST_SERIAL
 //
 // Disable flags if needed.  Usually commented
 // #define DISABLE
@@ -79,23 +78,61 @@ SYSTEM_THREAD(ENABLED);      // Make sure heat system code always run regardless
 #include "SparkFunMicroOLED.h"  // Include MicroOLED library
 #include "math.h"
 void  display(const uint8_t x, const uint8_t y, const String str, const uint8_t clear=0, const uint8_t type=0, const uint8_t clearA=0);
+void  displayStr(const uint8_t x, const uint8_t y, const String str, const uint8_t clear=0, const uint8_t type=0, const uint8_t clearA=0);
 int   rxFlushToChar(const char pchar);
 int   ping(const String cmd);
 int   pingJump(const String cmd, const String val);
 int   getResponse(void);
-int   pingMulti(const String cmd);
-int pingJumpMulti(const String cmd, const String* valArray, const uint8_t n);
 MicroOLED oled;
 //SYSTEM_MODE(MANUAL);
 
 // Global variables
 //This is a character buffer that will store the data from the serial port
-char rxData[20];
-char rxIndex      = 0;
+char    rxData[4*101];
+long    codes[100];
+long    activeCode[100];
+long    pendingCode[100];
+char    rxIndex   = 0;
+uint8_t ncodes    = 0;
 //Variables to hold the speed and RPM data.
 int vehicleSpeed  = 0;  // kph
 int vehicleRPM    = 0;  // rpm
-int verbose       = 6;  // Debugging Serial.print as much as you can tolerate.  0=none
+int verbose       = 5;  // Debugging Serial.print as much as you can tolerate.  0=none
+
+// Parse the OBD-II long string of codes returned by UART.
+int parseCodes(const char *rxData)
+{
+Serial.printf("rxD=%s\n", rxData);
+    int n = strlen(rxData);
+    if ( n < 8 )
+    {
+      ncodes = 0;
+      return(0);
+    }
+    char numC[3];
+    numC[0] = rxData[2];
+    numC[1] = rxData[3];
+    numC[2] = '\0';
+    ncodes = strtol(numC, NULL, 10);
+    if ( ncodes*4>(n-4) || ncodes>100 )
+    {
+      ncodes = 0;
+      return(0);
+    }
+    int i = 0;
+    int j = 4;
+    char C[5];
+    while ( i < ncodes )
+    {
+      C[0] = rxData[j++];
+      C[1] = rxData[j++];
+      C[2] = rxData[j++];
+      C[3] = rxData[j++];
+      C[4] = '\0';
+      codes[i++] = strtol(C, NULL, 10);
+    }
+    return(ncodes);
+}
 
 
 void setup()
@@ -120,22 +157,64 @@ void setup()
 void loop(){
   #ifdef TEST_SERIAL   // Jumper Tx to Rx
     if (verbose>4) display(0, 0, "JUMPER", 1, 1);
+    delay(1000);
   #else
-  if (verbose>4) display(0, 0, "ENGINE", 1, 1);
+    if (verbose>4) display(0, 0, "ENGINE", 1, 1);
+    delay(100);
   #endif
 
   // Codes
   #ifdef TEST_SERIAL   // Jumper Tx to Rx
-    pingJumpMulti("03", {"60", "70"}, 2);
-    long code = atol(rxData);
-    display(0, 2, String(code));
-    delay(1000);
-  #else
-    if (pingMulti("03") == 0)
+    char serCode[100];
+    sprintf(serCode, "43 01 20 02");
+    pingJump("03", serCode);
+    int nActive = parseCodes(rxData);
+Serial.printf("nActive=%d\n", nActive);
+    for ( int i=0; i<nActive; i++ )
     {
-      long code = strtol(&rxData[2], 0, 16);   // uses 2 not 4
-      display(0, 2, String(code));
-      delay(100);
+      activeCode[i] = codes[i];
+      displayStr(0, 2, String(activeCode[i]));
+      if ( i<nActive-1 ) displayStr(0, 2, ",");
+      delay(1000);
+    }
+    display(0, 2, "");
+    delay(1000);
+    sprintf(serCode, "47 02 20 02 20 03");
+    pingJump("07", serCode);
+    int nPending = parseCodes(rxData);
+    for ( int i=0; i<nPending; i++ )
+    {
+      pendingCode[i] = codes[i];
+      displayStr(0, 2, String(pendingCode[i]));
+      if ( i<nPending-1 ) displayStr(0, 2, ",");
+      delay(1000);
+    }
+    display(0, 2, "");
+  #else
+    if ( ping("03") == 0 )
+    {
+      int nActive = parseCodes(rxData);
+      for ( int i=0; i<nActive; i++ )
+      {
+        activeCode[i] = codes[i];
+        displayStr(0, 2, String(activeCode[i]));
+        if ( i<nActive-1 ) displayStr(0, 2, ",");
+        delay(1000);
+      }
+      display(0, 2, "");
+      delay(1000);
+    }
+    if ( ping("07") == 0 )
+    {
+      int nPending = parseCodes(rxData);
+      for ( int i=0; i<nPending; i++ )
+      {
+        pendingCode[i] = codes[i];
+        displayStr(0, 2, String(pendingCode[i]));
+        if ( i<nPending-1 ) displayStr(0, 2, ",");
+        delay(1000);
+      }
+      display(0, 2, "");
     }
   #endif
 
@@ -175,35 +254,6 @@ void loop(){
   #endif
 }
 
-// boilerplate jumper driver
-int pingJumpMulti(const String cmd, const String* valArray, const uint8_t n)
-{
-  if (verbose>3) display(0, 0, "Tx:" + cmd, 1);
-  delay(1000);
-  Serial1.println(cmd);
-  delay(1000);
-  //getResponse();
-  int notConnected = rxFlushToChar('\r');
-  delay(1000);
-  for ( int i=0; i<n; i++ )
-  {
-    if (verbose>3) display(0, 0, "Tx:" + valArray[i], 1);
-    delay(1000);
-    Serial1.println(valArray[i]);
-    // TODO this gets last response only
-    notConnected = getResponse() || notConnected;
-    if (notConnected)
-    {
-      display(0, 0, "No conn>", 1, 1);
-      int count = 0;
-      while (!Serial.available() && count++<5) delay(1000);
-      while (!Serial.read());
-    }
-    delay(1000);
-  }
-  return(notConnected);
-}
-
 
 // boilerplate jumper driver
 int pingJump(const String cmd, const String val)
@@ -230,23 +280,6 @@ int pingJump(const String cmd, const String val)
   return(notConnected);
 }
 
-// Boilerplate driver
-int pingMulti(const String cmd)
-{
-  int notConnected = rxFlushToChar('>');
-  if (verbose>3) display(0, 0, "Tx:" + cmd, 1);
-  Serial1.println(cmd + '\0');
-  notConnected = rxFlushToChar('\r')  || notConnected;
-  notConnected = getResponse()  || notConnected;
-  if (notConnected)
-  {
-    display(0, 0, "No conn>", 1, 1);
-    int count = 0;
-    while (!Serial.available() && count++<5) delay(1000);
-    while (!Serial.read());
-  }
-  return (notConnected);
-}
 
 
 // Boilerplate driver
@@ -279,6 +312,19 @@ void display(const uint8_t x, const uint8_t y, const String str, const uint8_t c
   oled.print(str);
   oled.display();
 }
+
+// Simple OLED print
+void displayStr(const uint8_t x, const uint8_t y, const String str, const uint8_t clear, const uint8_t type, const uint8_t clearA)
+{
+  Serial.printf("%s", str.c_str());
+  if (clearA) oled.clear(ALL);
+  if (clear) oled.clear(PAGE);
+  oled.setFontType(type);
+  oled.setCursor(x, y*oled.getFontHeight());
+  oled.print(str);
+  oled.display();
+}
+
 
 // Spin until pchar, 0 if found, 1 if fail
 int rxFlushToChar(const char pchar)
