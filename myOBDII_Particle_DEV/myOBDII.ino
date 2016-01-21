@@ -89,8 +89,16 @@ void setup()
 		impendNVM = F->loadNVM(faultNVM);
 		I->loadNVM(impendNVM);
 	}
-//	if ( verbose > 1 ) F->Print();
-	//if ( verbose > 1 ) I->Print();
+  else
+  {
+    impendNVM = F->loadNVM(faultNVM);
+		I->loadNVM(impendNVM);
+    F->resetAll();
+    I->resetAll();
+    impendNVM = F->storeNVM(faultNVM);
+    if ( impendNVM<0 || I->storeNVM(impendNVM)<0 ) Serial.printf("Failed pre-resest storeNVM\n");
+  }
+
   delay(1500);  display(&oled, 0, 0, "NVM", 1, 0, 1);  delay(500);
   String dispStr;
   if ( F->printActive(&dispStr)>0 );
