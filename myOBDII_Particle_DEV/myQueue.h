@@ -69,10 +69,12 @@ class Queue
 {
 private:
 	int front_, rear_, maxSize_, gmt_;
+	String name_;
 	FaultCode *A_;
 public:
-	Queue(const int maxSize, const int GMT);
-	Queue(const int front, const int rear, const int maxSize, const int GMT);
+	Queue(void);
+	Queue(const int maxSize, const int GMT, const String name);
+	Queue(const int front, const int rear, const int maxSize, const int GMT, const String name);
 	bool IsEmpty(void);
 	bool IsFull(void);
 	void Enqueue(const FaultCode x);
@@ -83,8 +85,10 @@ public:
 	void Print(void);
 	int  front(void);
 	int  printActive(void);
+	int  printActive(String *str);
 	int  rear(void);
 	int  maxSize(void);
+	String name(void);
 	int  loadNVM(const int start);
 	int  loadRaw(const uint8_t i, const FaultCode x);
 	FaultCode  getRaw(const uint8_t i);

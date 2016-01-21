@@ -4,13 +4,16 @@ extern int verbose;
 
 // class Queue
 // constructors
-Queue::Queue(const int maxSize, const int GMT)
-: front_(-1), rear_(-1), maxSize_(maxSize), gmt_(GMT)
+Queue::Queue()
+: front_(-1), rear_(-1), maxSize_(0), gmt_(0), name_("")
+{}
+Queue::Queue(const int maxSize, const int GMT, const String name)
+: front_(-1), rear_(-1), maxSize_(maxSize), gmt_(GMT), name_(name)
 {
 	A_ 				= new FaultCode[maxSize_];
 }
-Queue::Queue(const int front, const int rear, const int maxSize, const int GMT)
-: front_(front), rear_(rear), maxSize_(maxSize), gmt_(GMT)
+Queue::Queue(const int front, const int rear, const int maxSize, const int GMT, const String name)
+: front_(front), rear_(rear), maxSize_(maxSize), gmt_(GMT), name_(name)
 {
 	A_ 				= new FaultCode[maxSize_];
 }
@@ -170,6 +173,12 @@ int Queue::maxSize()
 	return maxSize_;
 }
 
+// Returns name
+String Queue::name()
+{
+	return name_;
+}
+
 // Add a fault
 void Queue::newCode(const unsigned long tim, const unsigned long cod)
 {
@@ -182,10 +191,19 @@ void Queue::newCode(const unsigned long tim, const unsigned long cod)
 		Serial.printf("Rear  is ");  rear.Print();  Serial.printf("\n");
 	}
 	// Queue inserts at rear (FIFO)
-	if ( rear.isReset() || (newOne.time!=rear.time || newOne.code!=rear.code) )
+	int count = (rear_+maxSize_-front_)%maxSize_ + 1;
+	bool haveIt = false;
+	int i = 0;
+	while ( !haveIt && i<count )
+	{
+		uint8_t index = (front_+i)%maxSize_; // Index of element while travesing circularly from front_
+		if ( !A_[index].reset && (A_[index].code==newOne.code) ) haveIt = true;
+		i++;
+	}
+	if ( !haveIt )
 	{
 		EnqueueOver(newOne);
-		if ( verbose > 4 )
+		if ( verbose > 2 )
 		{
 			Serial.printf("newCode:      ");
 			Print();
@@ -193,9 +211,9 @@ void Queue::newCode(const unsigned long tim, const unsigned long cod)
 	}
 	else
 	{
-		if ( verbose > 4 )
+		if ( verbose > 2 )
 		{
-			Serial.printf("newCode already logged:  ");
+			Serial.printf("newCode not reset and already logged:  ");
 			newOne.Print();
 			Serial.printf("\n");
 		}
@@ -207,15 +225,15 @@ void Queue::Print()
 {
 	//Finding number of elements in queue
 	int count = (rear_+maxSize_-front_)%maxSize_ + 1;
-	if ( verbose > 4 ) Serial.printf("Queue front, rear, maxSize: %d  %d  %d:", front_, rear_, maxSize_);
+	Serial.printf("%s ", name_.c_str());
+	if ( verbose > 4 ) Serial.printf("front, rear, maxSize: %d  %d  %d:", front_, rear_, maxSize_);
 	for(int i = 0; i <count; i++)
 	{
-		int index = (front_+i) % maxSize_; // Index of element while travesing circularly from front_
+		int index = (front_+i)%maxSize_; // Index of element while travesing circularly from front_
 		Serial.printf("| %d %d %d ", A_[index].time, A_[index].code, A_[index].reset);
 	}
 	Serial.printf("\n");
 }
-
 
 // Determine if any reset !=0.  This cannot be an internal variable because of Dequeuing.
 int Queue::printActive()
@@ -237,6 +255,26 @@ int Queue::printActive()
 	return nAct;
 }
 
+
+// Determine if any reset !=0.  This cannot be an internal variable because of Dequeuing.
+int Queue::printActive(String *str)
+{
+	int nAct = 0;
+	int count = (rear_+maxSize_-front_)%maxSize_ + 1;  // # elements in queue
+	*str = "";
+	for(int i = 0; i <count; i++)
+	{
+		int index = (front_+i) % maxSize_; // Index of element while travesing circularly from front_
+		if ( !A_[index].reset )
+		{
+			nAct++;
+			unsigned long t = A_[index].time;
+			Time.zone(gmt_);
+			*str += String(A_[index].code) + " ";
+		}
+	}
+	return nAct;
+}
 
 // Returns element at front_ of queue.
 FaultCode Queue::Rear()
