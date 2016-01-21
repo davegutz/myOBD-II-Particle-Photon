@@ -7,7 +7,7 @@ extern char       rxIndex;
 extern int        verbose;
 
 // Simple OLED print
-void display(MicroOLED* oled, const uint8_t x, const uint8_t y, const String str,\
+void  display(MicroOLED* oled, const uint8_t x, const uint8_t y, const String str,\
    const uint8_t clear, const uint8_t type, const uint8_t clearA)
 {
   Serial.println(str);
@@ -20,7 +20,7 @@ void display(MicroOLED* oled, const uint8_t x, const uint8_t y, const String str
 }
 
 // Simple OLED print
-void displayStr(MicroOLED* oled, const uint8_t x, const uint8_t y, const String str, \
+void  displayStr(MicroOLED* oled, const uint8_t x, const uint8_t y, const String str, \
   const uint8_t clear, const uint8_t type, const uint8_t clearA)
 {
   Serial.printf("%s", str.c_str());
@@ -37,7 +37,7 @@ void displayStr(MicroOLED* oled, const uint8_t x, const uint8_t y, const String 
 // and only exits when a carriage return character is seen. Once the carriage return
 // string is detected, the rxData buffer is null terminated (so we can treat it as a string)
 // and the rxData index is reset to 0 so that the next string can be copied.
-int getResponse(MicroOLED* oled, char* rxData)
+int   getResponse(MicroOLED* oled, char* rxData)
 {
   char inChar=0;
   if (verbose>4){
@@ -95,7 +95,7 @@ int getResponse(MicroOLED* oled, char* rxData)
 }
 
 // Parse the OBD-II long string of codes returned by UART.
-int parseCodes(const char *rxData, long *codes)
+int   parseCodes(const char *rxData, long *codes)
 {
     int n = strlen(rxData);
     if ( n < 8 )
@@ -130,7 +130,7 @@ int parseCodes(const char *rxData, long *codes)
 
 
 // Boilerplate driver
-int ping(MicroOLED* oled, const String cmd, char* rxData)
+int   ping(MicroOLED* oled, const String cmd, char* rxData)
 {
   int notConnected = rxFlushToChar(oled, '>');
   if (verbose>3) display(oled, 0, 0, "Tx:" + cmd, 1);
@@ -148,7 +148,7 @@ int ping(MicroOLED* oled, const String cmd, char* rxData)
 }
 
 // boilerplate jumper driver
-int pingJump(MicroOLED* oled, const String cmd, const String val, char* rxData)
+int   pingJump(MicroOLED* oled, const String cmd, const String val, char* rxData)
 {
   if (verbose>3) display(oled, 0, 0, "Tx:" + cmd, 1);
   delay(1000);
@@ -172,8 +172,24 @@ int pingJump(MicroOLED* oled, const String cmd, const String val, char* rxData)
   return(notConnected);
 }
 
+// Boilerplate driver
+void  pingReset(MicroOLED* oled, const String cmd)
+{
+  int notConnected = rxFlushToChar(oled, '>');
+  if (notConnected)
+  {
+    display(oled, 0, 0, "No conn>", 1, 1);
+    int count = 0;
+    while (!Serial.available() && count++<5) delay(1000);
+    while (!Serial.read());  // Blocking read
+  }
+  if (verbose>3) display(oled, 0, 0, "Tx:" + cmd, 1);
+  Serial1.println(cmd + '\0');
+}
+
+
 // Spin until pchar, 0 if found, 1 if fail
-int rxFlushToChar(MicroOLED* oled, const char pchar)
+int   rxFlushToChar(MicroOLED* oled, const char pchar)
 {
   char inChar=0;
   if (verbose>4){

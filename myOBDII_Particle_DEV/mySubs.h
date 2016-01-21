@@ -11,9 +11,7 @@ int   getResponse(MicroOLED* oled, char* rxData);
 int   parseCodes(const char *rxData, long *codes);
 int   ping(MicroOLED* oled, const String cmd, char* rxData);
 int   pingJump(MicroOLED* oled, const String cmd, const String val, char* rxData);
-
-
-
+void  pingReset(MicroOLED* oled, const String cmd);
 int   rxFlushToChar(MicroOLED* oled, const char pchar);
 
 #endif

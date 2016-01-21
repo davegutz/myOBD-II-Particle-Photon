@@ -84,6 +84,7 @@ public:
 	FaultCode  Rear(void);
 	void Print(void);
 	int  front(void);
+	int  numActive(void);
 	int  printActive(void);
 	int  printActive(String *str);
 	int  rear(void);

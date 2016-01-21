@@ -235,6 +235,24 @@ void Queue::Print()
 	Serial.printf("\n");
 }
 
+
+// Determine number of active (unreset) codes.  This cannot be an internal variable because of Dequeuing.
+int Queue::numActive()
+{
+	int nAct = 0;
+	int count = (rear_+maxSize_-front_)%maxSize_ + 1;  // # elements in queue
+	for(int i = 0; i <count; i++)
+	{
+		int index = (front_+i) % maxSize_; // Index of element while travesing circularly from front_
+		if ( !A_[index].reset )
+		{
+			nAct++;
+		}
+	}
+	return nAct;
+}
+
+
 // Determine if any reset !=0.  This cannot be an internal variable because of Dequeuing.
 int Queue::printActive()
 {

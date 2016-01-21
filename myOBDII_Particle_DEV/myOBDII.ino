@@ -166,11 +166,6 @@ void loop(){
     for ( int i=0; i<nActive; i++ )
     {
       F->newCode(faultTime, codes[i]); if ( verbose > 2 ) {F->Print();}
-/*
-      activeCode[i] = codes[i];
-      displayStr(&oled, 0, 2, String(activeCode[i]));
-      if ( i<nActive-1 ) displayStr(&oled, 0, 2, ",");
-      */
       delay(1000);
     }
     display(&oled, 0, 2, "");
@@ -181,11 +176,6 @@ void loop(){
     for ( int i=0; i<nPending; i++ )
     {
       I->newCode(faultTime, codes[i]); if ( verbose > 2 ) {I->Print();}
-/*
-      pendingCode[i] = codes[i];
-      displayStr(&oled, 0, 2, String(pendingCode[i]));
-      if ( i<nPending-1 ) displayStr(&oled, 0, 2, ",");
-*/
       delay(1000);
     }
     display(&oled, 0, 2, "");
@@ -273,7 +263,16 @@ void loop(){
 		if ( impendNVM<0 || I->storeNVM(impendNVM)<0 ) Serial.printf("Failed pre-resest storeNVM\n");
 		else
 		{
-			F->resetAll();
+      #ifdef TEST_SERIAL   // Jumper Tx to Rx
+      F->resetAll();
+      #else
+      if ( F->numActive()>0 )
+      {
+        pingReset(&oled, "04");
+        F->resetAll();
+        I->resetAll();
+      }
+      #endif
 		}
 		impendNVM = F->storeNVM(faultNVM);
 		if ( verbose > 3 ) Serial.printf("impendNVM=%d\n", impendNVM);
