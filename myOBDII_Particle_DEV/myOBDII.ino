@@ -32,7 +32,8 @@ SYSTEM_THREAD(ENABLED);      // Make sure heat system code always run regardless
 #include "mySubs.h"
 //
 // Test features usually commented
-#define TEST_SERIAL
+//#define TEST_SERIAL
+//#define TEST_SERIAL_STORE
 //
 // Disable flags if needed.  Usually commented
 // #define DISABLE
@@ -55,6 +56,16 @@ SYSTEM_THREAD(ENABLED);      // Make sure heat system code always run regardless
 //SYSTEM_MODE(MANUAL);
 
 // Global variables
+#ifdef TEST_SERIAL
+  bool            jumper        = true;       // using jumper
+#else
+  bool            jumper        = false;      // not using jumper
+#endif
+#ifdef TEST_SERIAL_STORE  // always allowed non jumper
+  bool            NVM_StoreAllowed = true;
+#else
+  bool            NVM_StoreAllowed = false;
+#endif
 long              activeCode[100];
 long              codes[100];
 Queue*            F;                          // Faults
@@ -64,7 +75,7 @@ const int         GMT 					= -5; 				// Greenwich mean time adjustment, hrs
 int               impendNVM;  								// NVM locations, calculated
 MicroOLED         oled;
 long              pendingCode[100];
-bool              refreshNVM    = true;       // Command to reset NVM on fresh load
+bool              clearNVM      = false;       // Command to reset NVM on fresh load
 char              rxData[4*101];
 int               vehicleSpeed  = 0;          // kph
 int               vehicleRPM    = 0;          // rpm
@@ -82,24 +93,13 @@ void setup()
   Serial.begin(9600);  Serial1.begin(9600);
   oled.begin();    // Initialize the OLED
 
-  F = new Queue(MAX_SIZE, GMT, "FAULTS");
-	I = new Queue(MAX_SIZE, GMT, "IMPENDING");
-	if ( !refreshNVM )
+  F = new Queue(MAX_SIZE, GMT, "FAULTS", (NVM_StoreAllowed || !jumper) );
+	I = new Queue(MAX_SIZE, GMT, "IMPENDING", (NVM_StoreAllowed || !jumper));
+	if ( !clearNVM )
 	{
 		impendNVM = F->loadNVM(faultNVM);
 		I->loadNVM(impendNVM);
 	}
-  else
-  {
-/*
-    impendNVM = F->loadNVM(faultNVM);
-		I->loadNVM(impendNVM);
-    F->resetAll();
-    I->resetAll();
-    impendNVM = F->storeNVM(faultNVM);
-    if ( impendNVM<0 || I->storeNVM(impendNVM)<0 ) Serial.printf("Failed pre-resest storeNVM\n");
-*/
-  }
 
   delay(1500);  display(&oled, 0, 0, "NVM", 1, 0, 1);  delay(500);
   String dispStr;
@@ -148,13 +148,16 @@ void loop(){
   sampling	= ((now-lastSample) >= SAMPLING_DELAY);
 	if ( sampling ) lastSample = now;
 
-  #ifdef TEST_SERIAL   // Jumper Tx to Rx
+  if ( jumper )
+  {
     display(&oled, 0, 0, "JUMPER");
     delay(1000);
-  #else
+  }
+  else
+  {
     display(&oled, 0, 0, "ENGINE");
     delay(100);
-  #endif
+  }
 
   if ( reading )
   {
@@ -260,25 +263,46 @@ void loop(){
 
   if ( resetting )
 	{
-		impendNVM = F->storeNVM(faultNVM);
-		if ( verbose>3 ) Serial.printf("impendNVM=%d\n", impendNVM);
-		if ( impendNVM<0 || I->storeNVM(impendNVM)<0 ) Serial.printf("Failed pre-resest storeNVM\n");
-		else
-		{
-      #ifdef TEST_SERIAL   // Jumper Tx to Rx
-      F->resetAll();
-      #else
-      if ( F->numActive()>0 )
+    int finalNVM;
+    if ( clearNVM )
+    {
+      impendNVM = F->clearNVM(faultNVM);
+      if ( verbose>3 ) Serial.printf("impendNVM=%d\n", impendNVM);
+      finalNVM  = I->clearNVM(impendNVM);
+    }
+	  else
+    {
+      impendNVM = F->storeNVM(faultNVM);
+      if ( verbose>3 ) Serial.printf("impendNVM=%d\n", impendNVM);
+      finalNVM  = I->storeNVM(impendNVM);
+    }
+    if ( impendNVM<0 || finalNVM<0 )
+      if ( clearNVM )
+        Serial.printf("Failed pre-reset clear NVM\n");
+      else
+        Serial.printf("Failed pre-reset storeNVM\n");
+    else
+	  {
+      if ( jumper )
       {
-        pingReset(&oled, "04");
         F->resetAll();
-        I->resetAll();
       }
-      #endif
-		}
-		impendNVM = F->storeNVM(faultNVM);
-		if ( verbose>3 ) Serial.printf("impendNVM=%d\n", impendNVM);
-		if ( impendNVM<0 ) Serial.printf("Failed post-reset storeNVM\n");
+      else
+      {
+        if ( F->numActive()>0 )
+        {
+          pingReset(&oled, "04");
+          F->resetAll();
+          I->resetAll();
+        }
+      }
+	  }
+    if ( !clearNVM )
+    {
+      impendNVM = F->storeNVM(faultNVM);
+  	  if ( verbose>3 ) Serial.printf("impendNVM=%d\n", impendNVM);
+  	  if ( impendNVM<0 ) Serial.printf("Failed post-reset storeNVM\n");
+    }
 	}
 
 }

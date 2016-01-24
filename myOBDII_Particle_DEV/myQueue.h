@@ -70,11 +70,13 @@ class Queue
 private:
 	int front_, rear_, maxSize_, gmt_;
 	String name_;
+	bool storing_;
 	FaultCode *A_;
 public:
 	Queue(void);
-	Queue(const int maxSize, const int GMT, const String name);
-	Queue(const int front, const int rear, const int maxSize, const int GMT, const String name);
+	Queue(const int maxSize, const int GMT, const String name, const bool storing);
+	Queue(const int front, const int rear, const int maxSize, const int GMT, const String name, const bool storing);
+	int  clearNVM(int);
 	bool IsEmpty(void);
 	bool IsFull(void);
 	void Enqueue(const FaultCode x);

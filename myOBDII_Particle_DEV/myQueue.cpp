@@ -5,15 +5,15 @@ extern int verbose;
 // class Queue
 // constructors
 Queue::Queue()
-: front_(-1), rear_(-1), maxSize_(0), gmt_(0), name_("")
+: front_(-1), rear_(-1), maxSize_(0), gmt_(0), name_(""), storing_(true)
 {}
-Queue::Queue(const int maxSize, const int GMT, const String name)
-: front_(-1), rear_(-1), maxSize_(maxSize), gmt_(GMT), name_(name)
+Queue::Queue(const int maxSize, const int GMT, const String name, const bool storing)
+: front_(-1), rear_(-1), maxSize_(maxSize), gmt_(GMT), name_(name), storing_(true)
 {
 	A_ 				= new FaultCode[maxSize_];
 }
-Queue::Queue(const int front, const int rear, const int maxSize, const int GMT, const String name)
-: front_(front), rear_(rear), maxSize_(maxSize), gmt_(GMT), name_(name)
+Queue::Queue(const int front, const int rear, const int maxSize, const int GMT, const String name, const bool storing)
+: front_(front), rear_(rear), maxSize_(maxSize), gmt_(GMT), name_(name), storing_(storing)
 {
 	A_ 				= new FaultCode[maxSize_];
 }
@@ -21,6 +21,39 @@ Queue::Queue(const int front, const int rear, const int maxSize, const int GMT, 
 // operators
 
 // functions
+// Clears NVM by reinitting the pointers
+int Queue::clearNVM(int start)
+{
+	int p = start;
+	FaultCode val;
+	val.time = 0UL; val.code = 0UL; val.reset = false;
+	EEPROM.write(p, int(-1)); 	p += sizeof(int);
+	EEPROM.write(p, int(-1));		p += sizeof(int);
+	EEPROM.write(p, maxSize_);	p += sizeof(int);
+	for ( uint8_t i=0; i<maxSize_; i++ )
+	{
+		EEPROM.put(p, val); p += sizeof(FaultCode);
+	}
+	// verify
+/*
+	int test;
+	FaultCode tc;
+	p = start;
+	test = EEPROM.read(p); Serial.printf("%d",int(test));if ( int(test)!=-1   ) return -1; p += sizeof(int);
+	test = EEPROM.read(p); Serial.printf("%d",int(test));if ( int(test)!=-1   ) return -1; p += sizeof(int);
+	test = EEPROM.read(p); Serial.printf("%d",int(test));if ( test!=maxSize_ ) return -1; p += sizeof(int);
+	for ( uint8_t i=0; i<maxSize_; i++ )
+	{
+		EEPROM.get(p, tc);
+		Serial.printf("%u %u %d\n", tc.time, tc.code, tc.reset);
+		if ( tc.time!=val.time || tc.code!=val.code || tc.reset!=val.reset ) return -1;
+		p += sizeof(FaultCode);
+	}
+	if ( verbose>4 ) Serial.printf("Verified clear.\n");
+	*/
+	return p;
+}
+
 // Removes an element in Queue from front_ end.
 void Queue::Dequeue()
 {
@@ -325,6 +358,11 @@ int Queue::resetAll()
 // Store in NVM
 int Queue::storeNVM(const int start)
 {
+	if ( !storing_ )
+	{
+		if ( verbose>0 ) Serial.println(name_ + ":  not storing NVM");
+		return start;
+	}
 	int p = start;
 	EEPROM.write(p, front_); 		p += sizeof(int);
 	EEPROM.write(p, rear_ );		p += sizeof(int);
