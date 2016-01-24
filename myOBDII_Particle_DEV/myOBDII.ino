@@ -32,7 +32,7 @@ SYSTEM_THREAD(ENABLED);      // Make sure heat system code always run regardless
 #include "mySubs.h"
 //
 // Test features usually commented
-//#define TEST_SERIAL
+#define TEST_SERIAL
 //
 // Disable flags if needed.  Usually commented
 // #define DISABLE
@@ -42,7 +42,6 @@ SYSTEM_THREAD(ENABLED);      // Make sure heat system code always run regardless
 //
 // Constants always defined
 // #define CONSTANT
-#define REFRESH_NVM   false						// Command to reset NVM on fresh load
 #define MAX_SIZE 30  //maximum size of the array that will store Queue.
 // Caution:::do not exceed about 30 for two code quees
 #define DISPLAY_DELAY 		30000UL 		// Fault code display period
@@ -65,13 +64,14 @@ const int         GMT 					= -5; 				// Greenwich mean time adjustment, hrs
 int               impendNVM;  								// NVM locations, calculated
 MicroOLED         oled;
 long              pendingCode[100];
+bool              refreshNVM    = true;       // Command to reset NVM on fresh load
 char              rxData[4*101];
 int               vehicleSpeed  = 0;          // kph
 int               vehicleRPM    = 0;          // rpm
 
 extern uint8_t    ncodes        = 0;
 extern char       rxIndex       = 0;
-extern int        verbose       = 3;         // Debugging Serial.print as much as you can tolerate.  0=none
+extern int        verbose       = 1;         // Debugging Serial.print as much as you can tolerate.  0=none
 
 
 
@@ -84,19 +84,21 @@ void setup()
 
   F = new Queue(MAX_SIZE, GMT, "FAULTS");
 	I = new Queue(MAX_SIZE, GMT, "IMPENDING");
-	if ( !REFRESH_NVM )
+	if ( !refreshNVM )
 	{
 		impendNVM = F->loadNVM(faultNVM);
 		I->loadNVM(impendNVM);
 	}
   else
   {
+/*
     impendNVM = F->loadNVM(faultNVM);
 		I->loadNVM(impendNVM);
     F->resetAll();
     I->resetAll();
     impendNVM = F->storeNVM(faultNVM);
     if ( impendNVM<0 || I->storeNVM(impendNVM)<0 ) Serial.printf("Failed pre-resest storeNVM\n");
+*/
   }
 
   delay(1500);  display(&oled, 0, 0, "NVM", 1, 0, 1);  delay(500);
@@ -165,7 +167,7 @@ void loop(){
     int nActive = parseCodes(rxData, codes);
     for ( int i=0; i<nActive; i++ )
     {
-      F->newCode(faultTime, codes[i]); if ( verbose > 2 ) {F->Print();}
+      F->newCode(faultTime, codes[i]); if ( verbose>2 ) {F->Print();}
       delay(1000);
     }
     display(&oled, 0, 2, "");
@@ -175,7 +177,7 @@ void loop(){
     int nPending = parseCodes(rxData, codes);
     for ( int i=0; i<nPending; i++ )
     {
-      I->newCode(faultTime, codes[i]); if ( verbose > 2 ) {I->Print();}
+      I->newCode(faultTime, codes[i]); if ( verbose>2 ) {I->Print();}
       delay(1000);
     }
     display(&oled, 0, 2, "");
@@ -259,7 +261,7 @@ void loop(){
   if ( resetting )
 	{
 		impendNVM = F->storeNVM(faultNVM);
-		if ( verbose > 3 ) Serial.printf("impendNVM=%d\n", impendNVM);
+		if ( verbose>3 ) Serial.printf("impendNVM=%d\n", impendNVM);
 		if ( impendNVM<0 || I->storeNVM(impendNVM)<0 ) Serial.printf("Failed pre-resest storeNVM\n");
 		else
 		{
@@ -275,7 +277,7 @@ void loop(){
       #endif
 		}
 		impendNVM = F->storeNVM(faultNVM);
-		if ( verbose > 3 ) Serial.printf("impendNVM=%d\n", impendNVM);
+		if ( verbose>3 ) Serial.printf("impendNVM=%d\n", impendNVM);
 		if ( impendNVM<0 ) Serial.printf("Failed post-reset storeNVM\n");
 	}
 

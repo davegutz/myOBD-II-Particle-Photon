@@ -23,7 +23,7 @@ void  display(MicroOLED* oled, const uint8_t x, const uint8_t y, const String st
 void  displayStr(MicroOLED* oled, const uint8_t x, const uint8_t y, const String str, \
   const uint8_t clear, const uint8_t type, const uint8_t clearA)
 {
-  Serial.printf("%s", str.c_str());
+  Serial.print(str);
   if (clearA) oled->clear(ALL);
   if (clear) oled->clear(PAGE);
   oled->setFontType(type);

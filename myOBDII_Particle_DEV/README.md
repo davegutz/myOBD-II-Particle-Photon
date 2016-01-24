@@ -15,8 +15,8 @@ Display  CAN-based OBD-II output to OLED.   Tested on Mazdaspeed3 '07'.
     UART Connections (with FT231X interface mounted):
       UART/FT231X --------------- Photon
         GND ------------------- GND
-        Tx  ------------------- Rx (Serial1)
-        Rx  ------------------- Tx (Serial1)
+        Tx  ------------------- Tx (Serial1)
+        Rx  ------------------- Rx (Serial1)
       Hardware Platform: Particle Photon
                          SparkFun Photon Micro OLED
                          SparkFun UART/FTID OBD-II Shield (FT213X)
