@@ -40,13 +40,15 @@ void  displayStr(MicroOLED* oled, const uint8_t x, const uint8_t y, const String
 int   getResponse(MicroOLED* oled, char* rxData)
 {
   char inChar=0;
-  if (verbose>4){
+  if ( verbose>4 )
+  {
     Serial.printf("Rx:");
     oled->setFontType(0);
     oled->setCursor(0, oled->getFontHeight());
     oled->print("Rx:");
     oled->display();
   }
+  else delay(100);
   //Keep reading characters until we get a carriage return
   bool  notFound  = true;
   int   count     = 0;
@@ -58,11 +60,12 @@ int   getResponse(MicroOLED* oled, char* rxData)
         inChar  = Serial1.read();    // Clear buffer
         rxData[rxIndex]='\0';
         rxIndex = 0;                // Reset the buffer for next pass
-        if (verbose>4){
+        if ( verbose>4 ){
           Serial.printf(";\n");
           oled->printf(";");
           oled->display();
         }
+        else delay(100);
         notFound = false;
       }
       else    // New char
@@ -72,23 +75,24 @@ int   getResponse(MicroOLED* oled, char* rxData)
         else if (inChar == '>')   continue;   // Strip prompts
         else if (inChar == '\0')  continue;   // Strip delimiters
         else rxData[rxIndex++] = inChar;
-        if (verbose>4){
-          if (verbose>5) Serial.printf("[");
+        if ( verbose>4 ){
+          if ( verbose>5 ) Serial.printf("[");
           Serial.printf("%c", inChar);
-          if (verbose>5) Serial.printf("]");
+          if ( verbose>5 ) Serial.printf("]");
           oled->printf("%c", inChar);
           oled->display();
-          //delay(100);
         }
+        else delay(100);
       }
     }
     else{   // !available
-      if (verbose>5){
-        //delay(1000);
+      if ( verbose>5 )
+      {
         Serial.printf(".");
         oled->printf(".");
         oled->display();
       }
+      else delay(100);
     }
   }
   return (notFound);
@@ -134,6 +138,7 @@ int   ping(MicroOLED* oled, const String cmd, char* rxData)
 {
   int notConnected = rxFlushToChar(oled, '>');
   if (verbose>3) display(oled, 0, 0, "Tx:" + cmd, 1);
+  else delay(100);
   Serial1.println(cmd + '\0');
   notConnected = rxFlushToChar(oled, '\r')  || notConnected;
   notConnected = getResponse(oled, rxData)  || notConnected;
@@ -192,13 +197,15 @@ void  pingReset(MicroOLED* oled, const String cmd)
 int   rxFlushToChar(MicroOLED* oled, const char pchar)
 {
   char inChar=0;
-  if (verbose>4){
+  if ( verbose>4 )
+  {
     Serial.printf("Rx:");
     oled->setFontType(0);
     oled->setCursor(0, oled->getFontHeight());
     oled->print("Rx:");
     oled->display();
   }
+  else delay(100);
   //Keep reading characters until we get a carriage return
   bool notFound = true;
   int count = 0;
@@ -208,11 +215,13 @@ int   rxFlushToChar(MicroOLED* oled, const char pchar)
     {
       if(Serial1.peek() == pchar){
         inChar  = Serial1.read();    // Clear buffer
-        if (verbose>4){
+        if ( verbose>4 )
+        {
           Serial.printf("%c;\n", inChar);
           oled->printf("%c;", inChar);
           oled->display();
         }
+        else delay(100);
         notFound = false;
       }
       else    // New char
@@ -220,23 +229,27 @@ int   rxFlushToChar(MicroOLED* oled, const char pchar)
         inChar = Serial1.read();
         if      (isspace(inChar)) continue;   // Strip line feeds left from previous \n-\r
         else if (inChar == '\0')  continue;   // Strip delimiters
-        else if (verbose>4){
-          if (verbose>5) Serial.printf("<");
+        else if ( verbose>4 )
+        {
+          if ( verbose>5 ) Serial.printf("<");
           Serial.printf("%c", inChar);
-          if (verbose>5) Serial.printf(">");
+          if ( verbose>5 ) Serial.printf(">");
           oled->printf("%c", inChar);
           oled->display();
-          //delay(100);
         }
+        else delay(100);
       }
     }
-    else{   // !available
-      if (verbose>5){
+    else
+    {   // !available
+      if ( verbose>5 )
+      {
         //delay(1000);
         Serial.printf(",");
         oled->printf(",");
         oled->display();
       }
+      else delay(100);
     }
   }
   return (notFound);

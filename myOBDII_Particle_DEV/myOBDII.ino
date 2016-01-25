@@ -32,8 +32,10 @@ SYSTEM_THREAD(ENABLED);      // Make sure heat system code always run regardless
 #include "mySubs.h"
 //
 // Test features usually commented
-//#define TEST_SERIAL
-//#define TEST_SERIAL_STORE
+bool              jumper        = false;      // not using jumper
+extern int        verbose       = 7;          // Debugging Serial.print as much as you can tolerate.  0=none
+bool              clearNVM      = false;      // Command to reset NVM on fresh load
+bool              NVM_StoreAllowed = false;   // Ignored for non-jumper
 //
 // Disable flags if needed.  Usually commented
 // #define DISABLE
@@ -56,16 +58,6 @@ SYSTEM_THREAD(ENABLED);      // Make sure heat system code always run regardless
 //SYSTEM_MODE(MANUAL);
 
 // Global variables
-#ifdef TEST_SERIAL
-  bool            jumper        = true;       // using jumper
-#else
-  bool            jumper        = false;      // not using jumper
-#endif
-#ifdef TEST_SERIAL_STORE  // always allowed non jumper
-  bool            NVM_StoreAllowed = true;
-#else
-  bool            NVM_StoreAllowed = false;
-#endif
 long              activeCode[100];
 long              codes[100];
 Queue*            F;                          // Faults
@@ -75,14 +67,12 @@ const int         GMT 					= -5; 				// Greenwich mean time adjustment, hrs
 int               impendNVM;  								// NVM locations, calculated
 MicroOLED         oled;
 long              pendingCode[100];
-bool              clearNVM      = false;       // Command to reset NVM on fresh load
 char              rxData[4*101];
 int               vehicleSpeed  = 0;          // kph
 int               vehicleRPM    = 0;          // rpm
 
 extern uint8_t    ncodes        = 0;
 extern char       rxIndex       = 0;
-extern int        verbose       = 1;         // Debugging Serial.print as much as you can tolerate.  0=none
 
 
 
@@ -93,8 +83,8 @@ void setup()
   Serial.begin(9600);  Serial1.begin(9600);
   oled.begin();    // Initialize the OLED
 
-  F = new Queue(MAX_SIZE, GMT, "FAULTS", (NVM_StoreAllowed || !jumper) );
-	I = new Queue(MAX_SIZE, GMT, "IMPENDING", (NVM_StoreAllowed || !jumper));
+  F = new Queue(MAX_SIZE, GMT, "FAULTS", (!jumper||NVM_StoreAllowed));
+	I = new Queue(MAX_SIZE, GMT, "IMPENDING", (!jumper||NVM_StoreAllowed));
 	if ( !clearNVM )
 	{
 		impendNVM = F->loadNVM(faultNVM);
@@ -163,90 +153,99 @@ void loop(){
   {
     unsigned long faultTime = Time.now();
     // Codes
-    #ifdef TEST_SERIAL   // Jumper Tx to Rx
-    char serCode[100];
-    sprintf(serCode, "43 01 20 02");
-    pingJump(&oled, "03", serCode, rxData);
-    int nActive = parseCodes(rxData, codes);
-    for ( int i=0; i<nActive; i++ )
+    if ( jumper )
     {
-      F->newCode(faultTime, codes[i]); if ( verbose>2 ) {F->Print();}
-      delay(1000);
-    }
-    display(&oled, 0, 2, "");
-    delay(1000);
-    sprintf(serCode, "47 02 20 02 20 03");
-    pingJump(&oled, "07", serCode, rxData);
-    int nPending = parseCodes(rxData, codes);
-    for ( int i=0; i<nPending; i++ )
-    {
-      I->newCode(faultTime, codes[i]); if ( verbose>2 ) {I->Print();}
-      delay(1000);
-    }
-    display(&oled, 0, 2, "");
-    #else
-    if ( ping(&oled, "03", rxData) == 0 )
-    {
+      char serCode[100];
+      sprintf(serCode, "43 01 20 02");
+      pingJump(&oled, "03", serCode, rxData);
       int nActive = parseCodes(rxData, codes);
       for ( int i=0; i<nActive; i++ )
       {
-        activeCode[i] = codes[i];
-        displayStr(&oled, 0, 2, String(activeCode[i]));
-        if ( i<nActive-1 ) displayStr(&oled, 0, 2, ",");
+        F->newCode(faultTime, codes[i]); if ( verbose>2 ) {F->Print();}
         delay(1000);
       }
       display(&oled, 0, 2, "");
       delay(1000);
-    }
-    if ( ping(&oled, "07", rxData) == 0 )
-    {
+      sprintf(serCode, "47 02 20 02 20 03");
+      pingJump(&oled, "07", serCode, rxData);
       int nPending = parseCodes(rxData, codes);
       for ( int i=0; i<nPending; i++ )
       {
-        pendingCode[i] = codes[i];
-        displayStr(&oled, 0, 2, String(pendingCode[i]));
-        if ( i<nPending-1 ) displayStr(&oled, 0, 2, ",");
+        I->newCode(faultTime, codes[i]); if ( verbose>2 ) {I->Print();}
         delay(1000);
       }
       display(&oled, 0, 2, "");
     }
-    #endif
+    else  // ENGINE6t
+    {
+      if ( ping(&oled, "03", rxData) == 0 ) // success
+      {
+        int nActive = parseCodes(rxData, codes);
+        for ( int i=0; i<nActive; i++ )
+        {
+          activeCode[i] = codes[i];
+          displayStr(&oled, 0, 2, String(activeCode[i]));
+          if ( i<nActive-1 ) displayStr(&oled, 0, 2, ",");
+          delay(1000);
+        }
+        display(&oled, 0, 2, "");
+        delay(1000);
+      }
+      if ( ping(&oled, "07", rxData) == 0 )
+      {
+        int nPending = parseCodes(rxData, codes);
+        for ( int i=0; i<nPending; i++ )
+        {
+          pendingCode[i] = codes[i];
+          displayStr(&oled, 0, 2, String(pendingCode[i]));
+          if ( i<nPending-1 ) displayStr(&oled, 0, 2, ",");
+          delay(1000);
+        }
+        display(&oled, 0, 2, "");
+      }
+    }
   }   // reading
 
   if ( sampling )
   {
     // Speed
-    #ifdef TEST_SERIAL   // Jumper Tx to Rx
-    pingJump(&oled, "010D", "60", rxData);
-    vehicleSpeed = atol(rxData);
-    display(&oled, 0, 1, String(vehicleSpeed)+" kph");
-    delay(1000);
-    #else
-    if (ping(&oled, "010D", rxData) == 0)
+    if ( jumper )
     {
-      //vehicleSpeed = strtol(&rxData[6],0,16);
-      vehicleSpeed = strtol(&rxData[4], 0, 16);
+      pingJump(&oled, "010D", "60", rxData);
+      vehicleSpeed = atol(rxData);
       display(&oled, 0, 1, String(vehicleSpeed)+" kph");
-      delay(100);
+      delay(1000);
     }
-    #endif
+    else   // ENGINE
+    {
+      if (ping(&oled, "010D", rxData) == 0)
+      {
+        //vehicleSpeed = strtol(&rxData[6],0,16);
+        vehicleSpeed = strtol(&rxData[4], 0, 16);
+        display(&oled, 0, 1, String(vehicleSpeed)+" kph");
+        delay(100);
+      }
+    }
 
     // RPM
-    #ifdef TEST_SERIAL   // Jumper Tx to Rx
-    pingJump(&oled, "010C", "900", rxData);
-    vehicleRPM = atol(rxData);
-    display(&oled, 0, 1, String(vehicleRPM)+" rpm");
-    delay(1000);
-    #else
-    if (ping(&oled, "010C", rxData) == 0)
+    if ( jumper )
     {
-      //NOTE: RPM data is two bytes long, and delivered in 1/4 RPM from the OBD-II-UART
-      //vehicleRPM = ((strtol(&rxData[6],0,16)*256)+strtol(&rxData[9],0,16))/4;
-      vehicleRPM = strtol(&rxData[4], 0, 16)/4;
-      display(&oled, 0, 1, (String(vehicleRPM)+" rpm"));
-      delay(100);
+      pingJump(&oled, "010C", "900", rxData);
+      vehicleRPM = atol(rxData);
+      display(&oled, 0, 1, String(vehicleRPM)+" rpm");
+      delay(1000);
     }
-    #endif
+    else // ENGINE
+    {
+      if (ping(&oled, "010C", rxData) == 0)
+      {
+        //NOTE: RPM data is two bytes long, and delivered in 1/4 RPM from the OBD-II-UART
+        //vehicleRPM = ((strtol(&rxData[6],0,16)*256)+strtol(&rxData[9],0,16))/4;
+        vehicleRPM = strtol(&rxData[4], 0, 16)/4;
+        display(&oled, 0, 1, (String(vehicleRPM)+" rpm"));
+        delay(100);
+      }
+    }
   }  // sampling
 
 
@@ -287,7 +286,7 @@ void loop(){
       {
         F->resetAll();
       }
-      else
+      else // ENGINE
       {
         if ( F->numActive()>0 )
         {
