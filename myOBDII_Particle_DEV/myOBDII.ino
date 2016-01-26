@@ -30,12 +30,15 @@ See README.md
 SYSTEM_THREAD(ENABLED);      // Make sure heat system code always run regardless of network status
 #include "myQueue.h"
 #include "mySubs.h"
+void  getCodes(MicroOLED* oled, const String cmd, unsigned long faultTime, char* rxData, long codes[100], long activeCode[100], Queue *F);
+
 //
 // Test features usually commented
-bool              jumper        = false;      // not using jumper
-extern int        verbose       = 7;          // Debugging Serial.print as much as you can tolerate.  0=none
-bool              clearNVM      = false;      // Command to reset NVM on fresh load
-bool              NVM_StoreAllowed = false;   // Ignored for non-jumper
+bool              jumper            = false;    // not using jumper
+extern int        verbose           = 2;        // Debugging Serial.print as much as you can tolerate.  0=none
+bool              clearNVM          = false;    // Command to reset NVM on fresh load
+bool              NVM_StoreAllowed  = false;    // Allow storing jumper faults
+bool              ignoring          = false;    // Ignore jumper faults
 //
 // Disable flags if needed.  Usually commented
 // #define DISABLE
@@ -143,11 +146,6 @@ void loop(){
     display(&oled, 0, 0, "JUMPER");
     delay(1000);
   }
-  else
-  {
-    display(&oled, 0, 0, "ENGINE");
-    delay(100);
-  }
 
   if ( reading )
   {
@@ -155,54 +153,16 @@ void loop(){
     // Codes
     if ( jumper )
     {
-      char serCode[100];
-      sprintf(serCode, "43 01 20 02");
-      pingJump(&oled, "03", serCode, rxData);
-      int nActive = parseCodes(rxData, codes);
-      for ( int i=0; i<nActive; i++ )
-      {
-        F->newCode(faultTime, codes[i]); if ( verbose>2 ) {F->Print();}
-        delay(1000);
-      }
-      display(&oled, 0, 2, "");
+      getJumpFaultCodes(&oled, "03", "43 01 20 02", faultTime, rxData, codes, \
+        activeCode, ignoring, F);
       delay(1000);
-      sprintf(serCode, "47 02 20 02 20 03");
-      pingJump(&oled, "07", serCode, rxData);
-      int nPending = parseCodes(rxData, codes);
-      for ( int i=0; i<nPending; i++ )
-      {
-        I->newCode(faultTime, codes[i]); if ( verbose>2 ) {I->Print();}
-        delay(1000);
-      }
-      display(&oled, 0, 2, "");
+      getJumpFaultCodes(&oled, "07", "47 02 20 12 20 13", faultTime, rxData, codes,\
+        activeCode, ignoring, I);
     }
-    else  // ENGINE6t
+    else  // ENGINE
     {
-      if ( ping(&oled, "03", rxData) == 0 ) // success
-      {
-        int nActive = parseCodes(rxData, codes);
-        for ( int i=0; i<nActive; i++ )
-        {
-          activeCode[i] = codes[i];
-          displayStr(&oled, 0, 2, String(activeCode[i]));
-          if ( i<nActive-1 ) displayStr(&oled, 0, 2, ",");
-          delay(1000);
-        }
-        display(&oled, 0, 2, "");
-        delay(1000);
-      }
-      if ( ping(&oled, "07", rxData) == 0 )
-      {
-        int nPending = parseCodes(rxData, codes);
-        for ( int i=0; i<nPending; i++ )
-        {
-          pendingCode[i] = codes[i];
-          displayStr(&oled, 0, 2, String(pendingCode[i]));
-          if ( i<nPending-1 ) displayStr(&oled, 0, 2, ",");
-          delay(1000);
-        }
-        display(&oled, 0, 2, "");
-      }
+      getCodes(&oled, "03", faultTime, rxData, codes, activeCode,  F);
+      getCodes(&oled, "07", faultTime, rxData, codes, pendingCode, I);
     }
   }   // reading
 
@@ -222,7 +182,7 @@ void loop(){
       {
         //vehicleSpeed = strtol(&rxData[6],0,16);
         vehicleSpeed = strtol(&rxData[4], 0, 16);
-        display(&oled, 0, 1, String(vehicleSpeed)+" kph");
+        display(&oled, 0, 0, String(vehicleSpeed)+" kph");
         delay(100);
       }
     }
@@ -242,7 +202,7 @@ void loop(){
         //NOTE: RPM data is two bytes long, and delivered in 1/4 RPM from the OBD-II-UART
         //vehicleRPM = ((strtol(&rxData[6],0,16)*256)+strtol(&rxData[9],0,16))/4;
         vehicleRPM = strtol(&rxData[4], 0, 16)/4;
-        display(&oled, 0, 1, (String(vehicleRPM)+" rpm"));
+        display(&oled, 0, 0, (String(vehicleRPM)+" rpm"));
         delay(100);
       }
     }
@@ -251,17 +211,20 @@ void loop(){
 
   if ( displaying )
 	{
+    uint8_t line;
+    if ( jumper ) line = 2; else line = 1;
     String dispStr;
 		if ( F->printActive(&dispStr)>0 );
 		else dispStr = "none";
-    display(&oled, 0, 2, ("F:" + dispStr));
+    display(&oled, 0, line, ("F:" + dispStr));
 		if ( I->printActive(&dispStr)>0 );
     else dispStr = "none";
-    display(&oled, 0, 3, ("I:" + dispStr));
+    display(&oled, 0, line+1, ("I:" + dispStr));
 	} // displaying
 
   if ( resetting )
 	{
+    Serial.printf("RESETTING...\n");
     int finalNVM;
     if ( clearNVM )
     {
@@ -282,6 +245,7 @@ void loop(){
         Serial.printf("Failed pre-reset storeNVM\n");
     else
 	  {
+      Serial.printf("Success clear/store NVM\n");
       if ( jumper )
       {
         F->resetAll();
@@ -301,7 +265,27 @@ void loop(){
       impendNVM = F->storeNVM(faultNVM);
   	  if ( verbose>3 ) Serial.printf("impendNVM=%d\n", impendNVM);
   	  if ( impendNVM<0 ) Serial.printf("Failed post-reset storeNVM\n");
+      else Serial.printf("Success post-reset store NVM\n");
     }
 	}
 
+}
+
+// Get and display engine codes
+void  getCodes(MicroOLED* oled, const String cmd, unsigned long faultTime, char* rxData, long codes[100], long activeCode[100], Queue *F)
+{
+  if ( ping(oled, cmd, rxData) == 0 ) // success
+  {
+    int nActive = parseCodes(rxData, codes);
+    for ( int i=0; i<nActive; i++ )
+    {
+      F->newCode(faultTime, codes[i]);
+      activeCode[i] = codes[i];
+      displayStr(oled, 0, 1, String(activeCode[i]));
+      if ( i<nActive-1 ) displayStr(oled, 0, 2, ",");
+      delay(1000);
+    }
+    display(oled, 0, 1, "");
+    delay(1000);
+  }
 }

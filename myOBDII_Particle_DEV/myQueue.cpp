@@ -218,19 +218,22 @@ void Queue::newCode(const unsigned long tim, const unsigned long cod)
 	FaultCode newOne 	= FaultCode(tim, cod, false); // false, by definition new
 	FaultCode front 	= Front();
 	FaultCode rear 		= Rear();
+	int count = (rear_+maxSize_-front_)%maxSize_ + 1;
 	if ( verbose>4 )
 	{
 		Serial.printf("Front is ");  front.Print(); Serial.printf("\n");
 		Serial.printf("Rear  is ");  rear.Print();  Serial.printf("\n");
+		Serial.printf("Count is %d\n", count);
+		Serial.printf("Checking for %u %u\n", tim, cod);
 	}
 	// Queue inserts at rear (FIFO)
-	int count = (rear_+maxSize_-front_)%maxSize_ + 1;
 	bool haveIt = false;
 	int i = 0;
 	while ( !haveIt && i<count )
 	{
 		uint8_t index = (front_+i)%maxSize_; // Index of element while travesing circularly from front_
 		if ( !A_[index].reset && (A_[index].code==newOne.code) ) haveIt = true;
+		if ( verbose>4 ) Serial.printf("Candidate: reset=%d code=%u \n", A_[index].reset, A_[index].code);
 		i++;
 	}
 	if ( !haveIt )

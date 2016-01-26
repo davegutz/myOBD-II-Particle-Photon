@@ -32,6 +32,19 @@ void  displayStr(MicroOLED* oled, const uint8_t x, const uint8_t y, const String
   oled->display();
 }
 
+// Get and display jumper codes
+void  getJumpFaultCodes(MicroOLED* oled, const String cmd, const String val, unsigned long faultTime, char* rxData, long codes[100], long activeCode[100], const bool ignoring, Queue *F)
+{
+  pingJump(oled, cmd, val, rxData);
+  int nActive = parseCodes(rxData, codes);
+  for ( int i=0; (i<nActive&&!ignoring); i++ )
+  {
+    F->newCode(faultTime, codes[i]);
+    if ( verbose>2 )  F->Print();
+    delay(1000);
+  }
+  display(oled, 0, 2, "");
+}
 
 //The getResponse function collects incoming data from the UART into the rxData buffer
 // and only exits when a carriage return character is seen. Once the carriage return
@@ -102,6 +115,7 @@ int   getResponse(MicroOLED* oled, char* rxData)
 int   parseCodes(const char *rxData, long *codes)
 {
     int n = strlen(rxData);
+    if ( verbose>4 ) Serial.printf("rxData[%d]=%s\n", n, rxData);
     if ( n < 8 )
     {
       ncodes = 0;
@@ -120,6 +134,7 @@ int   parseCodes(const char *rxData, long *codes)
     int i = 0;
     int j = 4;
     char C[5];
+    if ( verbose>4 ) Serial.printf("codes[%d]=", ncodes);
     while ( i < ncodes )
     {
       C[0] = rxData[j++];
@@ -128,7 +143,9 @@ int   parseCodes(const char *rxData, long *codes)
       C[3] = rxData[j++];
       C[4] = '\0';
       codes[i++] = strtol(C, NULL, 10);
+      if ( verbose>4 ) Serial.printf("%ld,", codes[i-1]);
     }
+    if ( verbose>4 && ncodes>0 ) Serial.printf("\n");
     return(ncodes);
 }
 
