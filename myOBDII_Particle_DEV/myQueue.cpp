@@ -27,21 +27,20 @@ int Queue::clearNVM(int start)
 	int p = start;
 	FaultCode val;
 	val.time = 0UL; val.code = 0UL; val.reset = false;
-	EEPROM.write(p, int(-1)); 	p += sizeof(int);
-	EEPROM.write(p, int(-1));		p += sizeof(int);
-	EEPROM.write(p, maxSize_);	p += sizeof(int);
+	EEPROM.put(p, int(-1)); 	p += sizeof(int);
+	EEPROM.put(p, int(-1));		p += sizeof(int);
+	EEPROM.put(p, maxSize_);	p += sizeof(int);
 	for ( uint8_t i=0; i<maxSize_; i++ )
 	{
 		EEPROM.put(p, val); p += sizeof(FaultCode);
 	}
 	// verify
-/*
 	int test;
 	FaultCode tc;
 	p = start;
-	test = EEPROM.read(p); Serial.printf("%d",int(test));if ( int(test)!=-1   ) return -1; p += sizeof(int);
-	test = EEPROM.read(p); Serial.printf("%d",int(test));if ( int(test)!=-1   ) return -1; p += sizeof(int);
-	test = EEPROM.read(p); Serial.printf("%d",int(test));if ( test!=maxSize_ ) return -1; p += sizeof(int);
+	EEPROM.read(p, test); Serial.printf("%d",test);if ( test!=-1   			) return -1; p += sizeof(int);
+	EEPROM.read(p, test); Serial.printf("%d",test);if ( test!=-1   			) return -1; p += sizeof(int);
+	EEPROM.read(p, test); Serial.printf("%d",test);if ( test!=maxSize_ 	) return -1; p += sizeof(int);
 	for ( uint8_t i=0; i<maxSize_; i++ )
 	{
 		EEPROM.get(p, tc);
@@ -50,7 +49,6 @@ int Queue::clearNVM(int start)
 		p += sizeof(FaultCode);
 	}
 	if ( verbose>4 ) Serial.printf("Verified clear.\n");
-	*/
 	return p;
 }
 
@@ -169,9 +167,9 @@ int Queue::loadRaw(const uint8_t i, const FaultCode x)
 int Queue::loadNVM(const int start)
 {
 	int p = start;
-	int front 	= EEPROM.read(p); p += sizeof(int);
-	int rear  	= EEPROM.read(p); p += sizeof(int);
-	int maxSize = EEPROM.read(p); p += sizeof(int);
+	int front; 		EEPROM.get(p, front); 	p += sizeof(int);
+	int rear;   	EEPROM.get(p, rear);  	p += sizeof(int);
+	int maxSize; 	EEPROM.get(p, maxSize); p += sizeof(int);
 	if ( verbose>4 ) Serial.printf("Queue::loadNVM:  front, rear, maxSize:  %d,%d,%d\n", front, rear, maxSize);  delay(2000);
 	if ( maxSize==maxSize_	&&					\
 	front<=maxSize_ 	&& front>=-1 &&		 \
@@ -367,9 +365,9 @@ int Queue::storeNVM(const int start)
 		return start;
 	}
 	int p = start;
-	EEPROM.write(p, front_); 		p += sizeof(int);
-	EEPROM.write(p, rear_ );		p += sizeof(int);
-	EEPROM.write(p, maxSize_);	p += sizeof(int);
+	EEPROM.put(p, front_); 		p += sizeof(int);
+	EEPROM.put(p, rear_ );		p += sizeof(int);
+	EEPROM.put(p, maxSize_);	p += sizeof(int);
 	for ( uint8_t i=0; i<maxSize_; i++ )
 	{
 		FaultCode val = getRaw(i);
@@ -378,18 +376,24 @@ int Queue::storeNVM(const int start)
 	}
 	// verify
 	int test;
+	bool success = true;
 	FaultCode tc, raw;
 	p = start;
-	test = EEPROM.read(p); if ( test!=front_   ) return -1; p += sizeof(int);
-	test = EEPROM.read(p); if ( test!=rear_    ) return -1; p += sizeof(int);
-	test = EEPROM.read(p); if ( test!=maxSize_ ) return -1; p += sizeof(int);
+	EEPROM.get(p, test); if ( test!=front_   ) success = false; p += sizeof(int);
+	if ( verbose>5 ) Serial.printf("%s read %d ?= %d demand\n", name_.c_str(), test, front_);
+	EEPROM.get(p, test); if ( test!=rear_    ) success = false; p += sizeof(int);
+	if ( verbose>5 ) Serial.printf("%s read %d ?= %d demand\n", name_.c_str(), test, rear_);
+	EEPROM.get(p, test); if ( test!=maxSize_ ) success = false; p += sizeof(int);
+	if ( verbose>5 ) Serial.printf("%s read %d ?= %d demand\n", name_.c_str(), test, maxSize_);
 	for ( uint8_t i=0; i<maxSize_; i++ )
 	{
 		FaultCode raw = getRaw(i);
 		EEPROM.get(p, tc);
-		if ( tc.time!=raw.time || tc.code!=raw.code || tc.reset!=raw.reset ) return -1;
+		if ( tc.time!=raw.time || tc.code!=raw.code || tc.reset!=raw.reset ) success = false;
+		if ( verbose>5 ) Serial.printf("%s read time %d ?= %d demand, code %d ?= %d, reset %d ?= %d\n", name_.c_str(), tc.time, raw.time, tc.code, raw.code, tc.reset, raw.reset);
 		p += sizeof(FaultCode);
 	}
-	if ( verbose>4 ) Serial.printf("Verified.\n");
-	return p;
+	if ( verbose>4 && success ) Serial.printf("%s Verified.\n", name_.c_str());
+	if ( success ) return p;
+	else 					 return -1;
 }

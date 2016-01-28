@@ -56,10 +56,12 @@ int   getResponse(MicroOLED* oled, char* rxData)
   if ( verbose>4 )
   {
     Serial.printf("Rx:");
+    /*
     oled->setFontType(0);
     oled->setCursor(0, oled->getFontHeight());
     oled->print("Rx:");
     oled->display();
+    */
   }
   else delay(100);
   //Keep reading characters until we get a carriage return
@@ -75,8 +77,8 @@ int   getResponse(MicroOLED* oled, char* rxData)
         rxIndex = 0;                // Reset the buffer for next pass
         if ( verbose>4 ){
           Serial.printf(";\n");
-          oled->printf(";");
-          oled->display();
+          //oled->printf(";");
+          //oled->display();
         }
         else delay(100);
         notFound = false;
@@ -92,8 +94,8 @@ int   getResponse(MicroOLED* oled, char* rxData)
           if ( verbose>5 ) Serial.printf("[");
           Serial.printf("%c", inChar);
           if ( verbose>5 ) Serial.printf("]");
-          oled->printf("%c", inChar);
-          oled->display();
+          //oled->printf("%c", inChar);
+          //oled->display();
         }
         else delay(100);
       }
@@ -102,8 +104,8 @@ int   getResponse(MicroOLED* oled, char* rxData)
       if ( verbose>5 )
       {
         Serial.printf(".");
-        oled->printf(".");
-        oled->display();
+        //oled->printf(".");
+        //oled->display();
       }
       else delay(100);
     }
@@ -154,7 +156,8 @@ int   parseCodes(const char *rxData, long *codes)
 int   ping(MicroOLED* oled, const String cmd, char* rxData)
 {
   int notConnected = rxFlushToChar(oled, '>');
-  if (verbose>3) display(oled, 0, 0, "Tx:" + cmd, 1);
+//  if (verbose>3) display(oled, 0, 0, "Tx:" + cmd, 1);
+  if (verbose>3) Serial.println("Tx:" + cmd);
   else delay(100);
   Serial1.println(cmd + '\0');
   notConnected = rxFlushToChar(oled, '\r')  || notConnected;
@@ -172,14 +175,16 @@ int   ping(MicroOLED* oled, const String cmd, char* rxData)
 // boilerplate jumper driver
 int   pingJump(MicroOLED* oled, const String cmd, const String val, char* rxData)
 {
-  if (verbose>3) display(oled, 0, 0, "Tx:" + cmd, 1);
+//  if (verbose>3) display(oled, 0, 0, "Tx:" + cmd, 1);
+  if (verbose>3) Serial.println("Tx:" + cmd);
   delay(1000);
   Serial1.println(cmd);
   delay(1000);
   //int notConnected = getResponse();
   int notConnected = rxFlushToChar(oled, '\r');
   delay(1000);
-  if (verbose>3) display(oled, 0, 0, "Tx:" + val, 1);
+//  if (verbose>3) display(oled, 0, 0, "Tx:" + val, 1);
+  if (verbose>3) Serial.println("Tx:" + val);
   Serial1.println(val);
   delay(1000);
   notConnected = getResponse(oled, rxData) || notConnected;
@@ -205,7 +210,8 @@ void  pingReset(MicroOLED* oled, const String cmd)
     while (!Serial.available() && count++<5) delay(1000);
     while (!Serial.read());  // Blocking read
   }
-  if (verbose>3) display(oled, 0, 0, "Tx:" + cmd, 1);
+//  if (verbose>3) display(oled, 0, 0, "Tx:" + cmd, 1);
+  if (verbose>3) Serial.println("Tx:" + cmd);
   Serial1.println(cmd + '\0');
 }
 
@@ -217,10 +223,12 @@ int   rxFlushToChar(MicroOLED* oled, const char pchar)
   if ( verbose>4 )
   {
     Serial.printf("Rx:");
+    /*
     oled->setFontType(0);
     oled->setCursor(0, oled->getFontHeight());
     oled->print("Rx:");
     oled->display();
+    */
   }
   else delay(100);
   //Keep reading characters until we get a carriage return
@@ -235,8 +243,10 @@ int   rxFlushToChar(MicroOLED* oled, const char pchar)
         if ( verbose>4 )
         {
           Serial.printf("%c;\n", inChar);
+/*
           oled->printf("%c;", inChar);
           oled->display();
+          */
         }
         else delay(100);
         notFound = false;
@@ -251,8 +261,8 @@ int   rxFlushToChar(MicroOLED* oled, const char pchar)
           if ( verbose>5 ) Serial.printf("<");
           Serial.printf("%c", inChar);
           if ( verbose>5 ) Serial.printf(">");
-          oled->printf("%c", inChar);
-          oled->display();
+          //oled->printf("%c", inChar);
+          //oled->display();
         }
         else delay(100);
       }
@@ -263,8 +273,8 @@ int   rxFlushToChar(MicroOLED* oled, const char pchar)
       {
         //delay(1000);
         Serial.printf(",");
-        oled->printf(",");
-        oled->display();
+        //oled->printf(",");
+        //oled->display();
       }
       else delay(100);
     }

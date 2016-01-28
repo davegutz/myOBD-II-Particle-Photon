@@ -34,11 +34,11 @@ void  getCodes(MicroOLED* oled, const String cmd, unsigned long faultTime, char*
 
 //
 // Test features usually commented
-bool              jumper            = false;    // not using jumper
-extern int        verbose           = 2;        // Debugging Serial.print as much as you can tolerate.  0=none
+bool              jumper            = true;    // not using jumper
+extern int        verbose           = 5;        // Debugging Serial.print as much as you can tolerate.  0=none
 bool              clearNVM          = false;    // Command to reset NVM on fresh load
 bool              NVM_StoreAllowed  = false;    // Allow storing jumper faults
-bool              ignoring          = false;    // Ignore jumper faults
+bool              ignoring          = true;    // Ignore jumper faults
 //
 // Disable flags if needed.  Usually commented
 // #define DISABLE
@@ -57,7 +57,7 @@ bool              ignoring          = false;    // Ignore jumper faults
 //
 // Dependent includes.   Easier to debug code if remove unused include files
 #include "SparkFunMicroOLED.h"  // Include MicroOLED library
-#include "math.h"
+#include "math.h"fcff
 //SYSTEM_MODE(MANUAL);
 
 // Global variables
@@ -229,14 +229,16 @@ void loop(){
     if ( clearNVM )
     {
       impendNVM = F->clearNVM(faultNVM);
-      if ( verbose>3 ) Serial.printf("impendNVM=%d\n", impendNVM);
+      if ( verbose>3 ) Serial.printf("clear faultNVM=%d\n", impendNVM);
       finalNVM  = I->clearNVM(impendNVM);
+      if ( verbose>3 ) Serial.printf("clear impendNVM=%d\n", finalNVM);
     }
 	  else
     {
       impendNVM = F->storeNVM(faultNVM);
-      if ( verbose>3 ) Serial.printf("impendNVM=%d\n", impendNVM);
+      if ( verbose>3 ) Serial.printf("store faultNVM=%d\n", impendNVM);
       finalNVM  = I->storeNVM(impendNVM);
+      if ( verbose>3 ) Serial.printf("store impendNVM=%d\n", finalNVM);
     }
     if ( impendNVM<0 || finalNVM<0 )
       if ( clearNVM )
