@@ -34,7 +34,7 @@ void  getCodes(MicroOLED* oled, const String cmd, unsigned long faultTime, char*
 
 //
 // Test features usually commented
-bool              jumper            = true;    // not using jumper
+bool              jumper            = false;    // not using jumper
 extern int        verbose           = 5;        // Debugging Serial.print as much as you can tolerate.  0=none
 bool              clearNVM          = false;    // Command to reset NVM on fresh load
 bool              NVM_StoreAllowed  = false;    // Allow storing jumper faults

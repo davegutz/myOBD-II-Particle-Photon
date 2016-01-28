@@ -38,9 +38,9 @@ int Queue::clearNVM(int start)
 	int test;
 	FaultCode tc;
 	p = start;
-	EEPROM.read(p, test); Serial.printf("%d",test);if ( test!=-1   			) return -1; p += sizeof(int);
-	EEPROM.read(p, test); Serial.printf("%d",test);if ( test!=-1   			) return -1; p += sizeof(int);
-	EEPROM.read(p, test); Serial.printf("%d",test);if ( test!=maxSize_ 	) return -1; p += sizeof(int);
+	EEPROM.get(p, test); Serial.printf("%d",test);if ( test!=-1   			) return -1; p += sizeof(int);
+	EEPROM.get(p, test); Serial.printf("%d",test);if ( test!=-1   			) return -1; p += sizeof(int);
+	EEPROM.get(p, test); Serial.printf("%d",test);if ( test!=maxSize_ 	) return -1; p += sizeof(int);
 	for ( uint8_t i=0; i<maxSize_; i++ )
 	{
 		EEPROM.get(p, tc);
