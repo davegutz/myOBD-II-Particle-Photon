@@ -328,6 +328,27 @@ int Queue::printActive(String *str)
 	return nAct;
 }
 
+// Print last num reset
+int  Queue::printInActive(String *str, const int num)
+{
+	int nInAct = 0;
+	int count = (rear_+maxSize_-front_)%maxSize_ + 1;  // # elements in queue
+	*str = "";
+	for(int i=0; (i<count&&nInAct<num); i++)
+	{
+		int index = (rear_-i) % maxSize_; // Index of element while travesing circularly from front_
+		if ( A_[index].reset )
+		{
+			nInAct++;
+			unsigned long t = A_[index].time;
+			Time.zone(gmt_);
+			*str += (String(Time.year(t)) + String(Time.month()) + String(Time.day(t))\
+			 		+ "\n    " + String(A_[index].code) + String("\n"));
+		}
+	}
+	return nInAct;
+}
+
 // Returns element at front_ of queue.
 FaultCode Queue::Rear()
 {

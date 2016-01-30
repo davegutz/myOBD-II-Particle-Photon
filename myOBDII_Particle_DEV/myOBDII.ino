@@ -30,7 +30,6 @@ See README.md
 SYSTEM_THREAD(ENABLED);      // Make sure heat system code always run regardless of network status
 #include "myQueue.h"
 #include "mySubs.h"
-void  getCodes(MicroOLED* oled, const String cmd, unsigned long faultTime, char* rxData, long codes[100], long activeCode[100], Queue *F);
 
 //
 // Test features usually commented
@@ -51,8 +50,8 @@ bool              ignoring          = true;    // Ignore jumper faults
 #define MAX_SIZE 30  //maximum size of the array that will store Queue.
 // Caution:::do not exceed about 30 for two code quees
 #define DISPLAY_DELAY 		30000UL 		// Fault code display period
-#define READ_DELAY 				10000UL 		// Fault code reading period
-#define RESET_DELAY 			80000UL 		// Fault reset period
+#define READ_DELAY 				30000UL 		// Fault code reading period
+#define RESET_DELAY 			90000UL 		// Fault reset period
 #define SAMPLING_DELAY		5000UL 		  // Data sampling period
 //
 // Dependent includes.   Easier to debug code if remove unused include files
@@ -114,15 +113,25 @@ void setup()
 		impendNVM = F->loadNVM(faultNVM);
 		I->loadNVM(impendNVM);
 	}
+  if ( jumper )
+  {
+    delay(500);  display(&oled, 0, 0, "JUMPER", 1, 0, 1);  delay(1500);
+  }
+  delay(1500);  display(&oled, 0, 0, "ACTIVE", 1, 0, 1);  delay(500);
 
-  delay(1500);  display(&oled, 0, 0, "NVM", 1, 0, 1);  delay(500);
   String dispStr;
   if ( F->printActive(&dispStr)>0 );
-  else dispStr = "none";
-  display(&oled, 0, 2, ("F:" + dispStr));
+  else dispStr = "----  ";
+  display(&oled, 0, 1, ("F:" + dispStr));
   if ( I->printActive(&dispStr)>0 );
-  else dispStr = "none";
+  else dispStr = "----  ";
   display(&oled, 0, 3, ("I:" + dispStr));
+  delay(10000);
+
+  display(&oled, 0, 0, "STORED", 1, 0, 1);
+  if ( F->printInActive(&dispStr, 2)>0 );
+  else dispStr = "----  ";
+  display(&oled, 0, 1, ("F:" + dispStr));
   delay(10000);
 
 //TODO enumerated type for last three display argumenets.   Add delay to arguments (before first optional)
@@ -196,7 +205,7 @@ void loop(){
       pingJump(&oled, "010D", "60", rxData);
       vehicleSpeed = atol(rxData);
       char tmp[100];
-      sprintf(tmp, "%3.0f mph", float(vehicleSpeed)*0.6);
+      sprintf(tmp, "%3.0f mph  ", float(vehicleSpeed)*0.6);
       display(&oled, 0, 1, String(tmp));
       delay(1000);
     }
@@ -206,8 +215,13 @@ void loop(){
       {
         vehicleSpeed = strtol(&rxData[4], 0, 16);
         char tmp[100];
-        sprintf(tmp, "%3.0f mph", float(vehicleSpeed)*0.6);
+        sprintf(tmp, "%3.0f mph  ", float(vehicleSpeed)*0.6);
         display(&oled, 0, 0, String(tmp));
+        delay(200);
+      }
+      else
+      {
+        display(&oled, 0, 0, "---- mph  ");
         delay(200);
       }
     }
@@ -217,7 +231,7 @@ void loop(){
     {
       pingJump(&oled, "010C", "900", rxData);
       vehicleRPM = atol(rxData);
-      display(&oled, 0, 1, String(vehicleRPM)+" rpm");
+      display(&oled, 0, 1, String(vehicleRPM)+" rpm  ");
       delay(1000);
     }
     else // ENGINE
@@ -226,6 +240,11 @@ void loop(){
       {
         vehicleRPM = strtol(&rxData[4], 0, 16)/4;
         display(&oled, 0, 0, (String(vehicleRPM)+" rpm"));
+        delay(200);
+      }
+      else
+      {
+        display(&oled, 0, 0, "---- rpm  ");
         delay(200);
       }
     }
@@ -267,6 +286,11 @@ void loop(){
         display(&oled, 0, 0, (String(warmsSinceRes)+" wms  "));
         delay(500);
       }
+      else
+      {
+        display(&oled, 0, 0, "---- wms  ");
+        delay(200);
+      }
     }
 
     // km Since Reset 2 byte
@@ -288,6 +312,11 @@ void loop(){
         sprintf(tmp, "%5.0f mi ", float(kmSinceRes)*0.6);
         display(&oled, 0, 0, String(tmp));
         delay(500);
+      }
+      else
+      {
+        display(&oled, 0, 0, "---- mi   ");
+        delay(200);
       }
     }
 
@@ -312,16 +341,21 @@ void loop(){
         display(&oled, 0, 0, String(tmp));
         delay(200);
       }
+      else
+      {
+        display(&oled, 0, 0, "---- F   ");
+        delay(200);
+      }
     }
 
     // Ready bytes  4 bytes
     if ( jumper )
     {
-      pingJump(&oled, "0141", "10101010", rxData);
+      pingJump(&oled, "0141", "007E500", rxData);
       completeness = String(rxData);
       display(&oled, 0, 1, completeness);
       delay(1000);
-      pingJump(&oled, "0101", "10101010", rxData);
+      pingJump(&oled, "0101", "1010101010", rxData);
       completeness = String(rxData);
       display(&oled, 0, 1, completeness);
       delay(1000);
@@ -334,10 +368,20 @@ void loop(){
         display(&oled, 0, 0, completeness);
         delay(1000);
       }
+      else
+      {
+        display(&oled, 0, 0, "-------------");
+        delay(1000);
+      }
       if (ping(&oled, "0101", rxData) == 0)
       {
-        completeness = String(&rxData[5]);  // omit empty A
+        completeness = String(&rxData[4]);  // omit empty A
         display(&oled, 0, 0, completeness);
+        delay(1000);
+      }
+      else
+      {
+        display(&oled, 0, 0, "-------------");
         delay(1000);
       }
     }
@@ -353,10 +397,10 @@ void loop(){
     if ( jumper ) line = 2; else line = 1;
     String dispStr;
 		if ( F->printActive(&dispStr)>0 );
-		else dispStr = "none";
+		else dispStr = "----  ";
     display(&oled, 0, line, ("F:" + dispStr));
 		if ( I->printActive(&dispStr)>0 );
-    else dispStr = "none";
+    else dispStr = "----  ";
     display(&oled, 0, line+1, ("I:" + dispStr));
 	} // displaying
 
@@ -409,23 +453,4 @@ void loop(){
     }
 	}
 
-}
-
-// Get and display engine codes
-void  getCodes(MicroOLED* oled, const String cmd, unsigned long faultTime, char* rxData, long codes[100], long activeCode[100], Queue *F)
-{
-  if ( ping(oled, cmd, rxData) == 0 ) // success
-  {
-    int nActive = parseCodes(rxData, codes);
-    for ( int i=0; i<nActive; i++ )
-    {
-      F->newCode(faultTime, codes[i]);
-      activeCode[i] = codes[i];
-      displayStr(oled, 0, 1, String(activeCode[i]));
-      if ( i<nActive-1 ) displayStr(oled, 0, 2, ",");
-      delay(1000);
-    }
-    display(oled, 0, 1, "");
-    delay(1000);
-  }
 }

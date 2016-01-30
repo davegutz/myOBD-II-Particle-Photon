@@ -89,6 +89,7 @@ public:
 	int  numActive(void);
 	int  printActive(void);
 	int  printActive(String *str);
+	int  printInActive(String *str, const int num);
 	int  rear(void);
 	int  maxSize(void);
 	String name(void);
