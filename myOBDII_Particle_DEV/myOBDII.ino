@@ -62,6 +62,23 @@ bool              ignoring          = true;    // Ignore jumper faults
 
 // Global variables
 long              activeCode[100];
+String            completeness;               // Internal readiness
+/*                     Test enabled	Test incomplete
+Empty                  A0-A7
+Reserved	             B3	           B7
+Components	           B2	           B6
+Fuel System	           B1	           B5
+Misfire	               B0	           B4
+EGR System	           C7	           D7
+Oxygen Sensor Heater	 C6	           D6
+Oxygen Sensor	         C5	          D5
+A/C Refrigerant	      C4	           D4
+Secondary Air System	C3	          D3
+Evaporative System	  C2	          D2
+Heated Catalyst	      C1	         D1
+Catalyst	           C0	           D0
+*/
+int               coolantTemp   = 0;          // Coolant temp -40 to 215 C
 long              codes[100];
 Queue*            F;                          // Faults
 Queue*            I;                          // Impending faults
@@ -71,8 +88,11 @@ int               impendNVM;  								// NVM locations, calculated
 MicroOLED         oled;
 long              pendingCode[100];
 char              rxData[4*101];
-int               vehicleSpeed  = 0;          // kph
-int               vehicleRPM    = 0;          // rpm
+int               timeSinceRes  = 0;          // min 65535
+int               warmsSinceRes = 0;          // 255
+int               kmSinceRes    = 0;          // km 65535
+int               vehicleSpeed  = 0;          // kph 255
+int               vehicleRPM    = 0;          // rpm 16383
 
 extern uint8_t    ncodes        = 0;
 extern char       rxIndex       = 0;
@@ -82,8 +102,9 @@ extern char       rxIndex       = 0;
 void setup()
 {
   Serial.printf("\n\n\nSetup ...\n");
-  WiFi.off();
-  Serial.begin(9600);  Serial1.begin(9600);
+  WiFi.disconnect();
+  Serial.begin(9600);
+  Serial1.begin(9600);
   oled.begin();    // Initialize the OLED
 
   F = new Queue(MAX_SIZE, GMT, "FAULTS", (!jumper||NVM_StoreAllowed));
@@ -114,6 +135,7 @@ void setup()
   display(&oled, 0, 1, String(rxData), 0, 0);
   Serial.printf("setup ending\n");
   delay(2000);
+  WiFi.off();
 }
 
 
@@ -173,21 +195,24 @@ void loop(){
     {
       pingJump(&oled, "010D", "60", rxData);
       vehicleSpeed = atol(rxData);
-      display(&oled, 0, 1, String(vehicleSpeed)+" kph");
+      char tmp[100];
+      sprintf(tmp, "%3.0f mph", float(vehicleSpeed)*0.6);
+      display(&oled, 0, 1, String(tmp));
       delay(1000);
     }
     else   // ENGINE
     {
       if (ping(&oled, "010D", rxData) == 0)
       {
-        //vehicleSpeed = strtol(&rxData[6],0,16);
         vehicleSpeed = strtol(&rxData[4], 0, 16);
-        display(&oled, 0, 0, String(vehicleSpeed)+" kph");
-        delay(100);
+        char tmp[100];
+        sprintf(tmp, "%3.0f mph", float(vehicleSpeed)*0.6);
+        display(&oled, 0, 0, String(tmp));
+        delay(200);
       }
     }
 
-    // RPM
+    // RPM  2 bytes  ((A*256)+B)/4
     if ( jumper )
     {
       pingJump(&oled, "010C", "900", rxData);
@@ -199,13 +224,126 @@ void loop(){
     {
       if (ping(&oled, "010C", rxData) == 0)
       {
-        //NOTE: RPM data is two bytes long, and delivered in 1/4 RPM from the OBD-II-UART
-        //vehicleRPM = ((strtol(&rxData[6],0,16)*256)+strtol(&rxData[9],0,16))/4;
         vehicleRPM = strtol(&rxData[4], 0, 16)/4;
         display(&oled, 0, 0, (String(vehicleRPM)+" rpm"));
+        delay(200);
+      }
+    }
+
+
+/*  Not available 2007 Mazdaspeed3
+    // Time Since Reset 2 bytes
+    if ( jumper )
+    {
+      pingJump(&oled, "4E", "65535", rxData);
+      timeSinceRes = atol(rxData);
+      display(&oled, 0, 1, String(timeSinceRes)+" min");
+      delay(1000);
+    }
+    else // ENGINE
+    {
+      if (ping(&oled, "4E", rxData) == 0)
+      {
+        timeSinceRes = strtol(&rxData[2], 0, 16); // min
+        display(&oled, 0, 0, (String(timeSinceRes)+" min"));
         delay(100);
       }
     }
+*/
+
+    // Warmups Since Reset 1 byte
+    if ( jumper )
+    {
+      pingJump(&oled, "0130", "255", rxData);
+      warmsSinceRes = atol(rxData);
+      display(&oled, 0, 1, String(warmsSinceRes)+" wms  ");
+      delay(1000);
+    }
+    else // ENGINE
+    {
+      if (ping(&oled, "0130", rxData) == 0)
+      {
+        warmsSinceRes = strtol(&rxData[4], 0, 16); // number
+        display(&oled, 0, 0, (String(warmsSinceRes)+" wms  "));
+        delay(500);
+      }
+    }
+
+    // km Since Reset 2 byte
+    if ( jumper )
+    {
+      pingJump(&oled, "0131", "65535", rxData);
+      kmSinceRes = atol(rxData);
+      char tmp[100];
+      sprintf(tmp, "%5.0f mi ", float(kmSinceRes)*0.6);
+      display(&oled, 0, 1, String(tmp));
+      delay(1000);
+    }
+    else // ENGINE
+    {
+      if (ping(&oled, "0131", rxData) == 0)
+      {
+        kmSinceRes = strtol(&rxData[4], 0, 16); // km
+        char tmp[100];
+        sprintf(tmp, "%5.0f mi ", float(kmSinceRes)*0.6);
+        display(&oled, 0, 0, String(tmp));
+        delay(500);
+      }
+    }
+
+
+    // Coolant temp 1 byte  0105
+    if ( jumper )
+    {
+      pingJump(&oled, "0105", "215", rxData);
+      coolantTemp = atoi(rxData);
+      char tmp[100];
+      sprintf(tmp, "%3.0f F    ", float(coolantTemp)*9/5+32);
+      display(&oled, 0, 1, String(tmp));
+      delay(1000);
+    }
+    else // ENGINE
+    {
+      if (ping(&oled, "0105", rxData) == 0)
+      {
+        coolantTemp = strtol(&rxData[4], 0, 16)-40;  // C
+        char tmp[100];
+        sprintf(tmp, "%3.0f F    ", float(coolantTemp)*9/5+32);
+        display(&oled, 0, 0, String(tmp));
+        delay(200);
+      }
+    }
+
+    // Ready bytes  4 bytes
+    if ( jumper )
+    {
+      pingJump(&oled, "0141", "10101010", rxData);
+      completeness = String(rxData);
+      display(&oled, 0, 1, completeness);
+      delay(1000);
+      pingJump(&oled, "0101", "10101010", rxData);
+      completeness = String(rxData);
+      display(&oled, 0, 1, completeness);
+      delay(1000);
+    }
+    else // ENGINE
+    {
+      if (ping(&oled, "0141", rxData) == 0)
+      {
+        completeness = String(&rxData[5]);  // omit empty A
+        display(&oled, 0, 0, completeness);
+        delay(1000);
+      }
+      if (ping(&oled, "0101", rxData) == 0)
+      {
+        completeness = String(&rxData[5]);  // omit empty A
+        display(&oled, 0, 0, completeness);
+        delay(1000);
+      }
+    }
+
+
+
   }  // sampling
 
 
