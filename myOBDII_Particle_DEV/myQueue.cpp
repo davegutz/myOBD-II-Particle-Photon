@@ -1,19 +1,18 @@
 #include "application.h"
 #include "myQueue.h"
-extern int verbose;
 
 // class Queue
 // constructors
 Queue::Queue()
-: front_(-1), rear_(-1), maxSize_(0), gmt_(0), name_(""), storing_(true)
+: front_(-1), rear_(-1), maxSize_(0), gmt_(0), name_(""), storing_(true), verbose_(0)
 {}
-Queue::Queue(const int maxSize, const int GMT, const String name, const bool storing)
-: front_(-1), rear_(-1), maxSize_(maxSize), gmt_(GMT), name_(name), storing_(true)
+Queue::Queue(const int maxSize, const int GMT, const String name, const bool storing, const int verbose)
+: front_(-1), rear_(-1), maxSize_(maxSize), gmt_(GMT), name_(name), storing_(true), verbose_(verbose)
 {
 	A_ 				= new FaultCode[maxSize_];
 }
-Queue::Queue(const int front, const int rear, const int maxSize, const int GMT, const String name, const bool storing)
-: front_(front), rear_(rear), maxSize_(maxSize), gmt_(GMT), name_(name), storing_(storing)
+Queue::Queue(const int front, const int rear, const int maxSize, const int GMT, const String name, const bool storing, const int verbose)
+: front_(front), rear_(rear), maxSize_(maxSize), gmt_(GMT), name_(name), storing_(storing), verbose_(verbose)
 {
 	A_ 				= new FaultCode[maxSize_];
 }
@@ -48,17 +47,17 @@ int Queue::clearNVM(int start)
 		if ( tc.time!=val.time || tc.code!=val.code || tc.reset!=val.reset ) return -1;
 		p += sizeof(FaultCode);
 	}
-	if ( verbose>4 ) Serial.printf("Verified clear.\n");
+	if ( verbose_>4 ) Serial.printf("Verified clear.\n");
 	return p;
 }
 
 // Removes an element in Queue from front_ end.
 void Queue::Dequeue()
 {
-	if ( verbose>4 ) Serial.printf("Dequeuing \n");
+	if ( verbose_>4 ) Serial.printf("Dequeuing \n");
 	if(IsEmpty())
 	{
-		if ( verbose>0 ) Serial.println(name_ + ": empty queue");
+		if ( verbose_>0 ) Serial.println(name_ + ": empty queue");
 		return;
 	}
 	else if(front_ == rear_ )
@@ -77,7 +76,7 @@ void Queue::Enqueue(const FaultCode x)
 	Serial.printf("Enqueuing %d\n", x.code);
 	if(IsFull())
 	{
-		if ( verbose>0 ) Serial.println(name_ + ": queue is full");
+		if ( verbose_>0 ) Serial.println(name_ + ": queue is full");
 		return;
 	}
 	if (IsEmpty())
@@ -94,7 +93,7 @@ void Queue::Enqueue(const FaultCode x)
 // Inserts an element in queue at rear_ end.  Pops one off if full
 void Queue::EnqueueOver(const FaultCode x)
 {
-	if ( verbose>4 ) Serial.printf("Enqueuing %d\n", x.code);
+	if ( verbose_>4 ) Serial.printf("Enqueuing %d\n", x.code);
 	if(IsFull())
 	{
 		Queue::Dequeue();
@@ -115,7 +114,7 @@ FaultCode Queue::Front()
 {
 	if(front_ == -1)
 	{
-		if ( verbose>0 ) Serial.println(name_ + ": no front; empty queue");
+		if ( verbose_>0 ) Serial.println(name_ + ": no front; empty queue");
 		return FaultCode(0UL, 0UL);
 	}
 	return A_[front_];
@@ -133,7 +132,7 @@ FaultCode Queue::getRaw(const uint8_t i)
 {
 	if ( i>= maxSize_ )
 	{
-		if ( verbose>1 ) Serial.printf("Request ignored: %d\n", i);
+		if ( verbose_>1 ) Serial.printf("Request ignored: %d\n", i);
 		return FaultCode(0UL, 0UL);
 	}
 	return(A_[i]);
@@ -156,7 +155,7 @@ int Queue::loadRaw(const uint8_t i, const FaultCode x)
 {
 	if ( i>= maxSize_ )
 	{
-		if ( verbose>1 ) Serial.printf("Entry ignored:  %d\n", i);
+		if ( verbose_>1 ) Serial.printf("Entry ignored:  %d\n", i);
 		return -1;
 	}
 	A_[i] = x;
@@ -170,7 +169,7 @@ int Queue::loadNVM(const int start)
 	int front; 		EEPROM.get(p, front); 	p += sizeof(int);
 	int rear;   	EEPROM.get(p, rear);  	p += sizeof(int);
 	int maxSize; 	EEPROM.get(p, maxSize); p += sizeof(int);
-	if ( verbose>4 ) Serial.printf("Queue::loadNVM:  front, rear, maxSize:  %d,%d,%d\n", front, rear, maxSize);  delay(2000);
+	if ( verbose_>4 ) Serial.printf("Queue::loadNVM:  front, rear, maxSize:  %d,%d,%d\n", front, rear, maxSize);  delay(2000);
 	if ( maxSize==maxSize_	&&					\
 	front<=maxSize_ 	&& front>=-1 &&		 \
 	rear<=maxSize_  	&& rear>=-1 )
@@ -183,7 +182,7 @@ int Queue::loadNVM(const int start)
 			unsigned long tim;
 			FaultCode fc;
 			EEPROM.get(p, fc); p += sizeof(FaultCode);
-			if ( verbose>4 ) Serial.printf("%d %d %d\n", fc.time, fc.code, fc.reset);
+			if ( verbose_>4 ) Serial.printf("%d %d %d\n", fc.time, fc.code, fc.reset);
 			loadRaw(i, fc);
 		}
 	}
@@ -217,7 +216,7 @@ void Queue::newCode(const unsigned long tim, const unsigned long cod)
 	FaultCode front 	= Front();
 	FaultCode rear 		= Rear();
 	int count = (rear_+maxSize_-front_)%maxSize_ + 1;
-	if ( verbose>4 )
+	if ( verbose_>4 )
 	{
 		Serial.printf("Front is ");  front.Print(); Serial.printf("\n");
 		Serial.printf("Rear  is ");  rear.Print();  Serial.printf("\n");
@@ -231,13 +230,13 @@ void Queue::newCode(const unsigned long tim, const unsigned long cod)
 	{
 		uint8_t index = (front_+i)%maxSize_; // Index of element while travesing circularly from front_
 		if ( !A_[index].reset && (A_[index].code==newOne.code) ) haveIt = true;
-		if ( verbose>4 ) Serial.printf("Candidate: reset=%d code=%u \n", A_[index].reset, A_[index].code);
+		if ( verbose_>4 ) Serial.printf("Candidate: reset=%d code=%u \n", A_[index].reset, A_[index].code);
 		i++;
 	}
 	if ( !haveIt )
 	{
 		EnqueueOver(newOne);
-		if ( verbose>2 )
+		if ( verbose_>2 )
 		{
 			Serial.printf("newCode:      ");
 			Print();
@@ -245,7 +244,7 @@ void Queue::newCode(const unsigned long tim, const unsigned long cod)
 	}
 	else
 	{
-		if ( verbose>2 )
+		if ( verbose_>2 )
 		{
 			Serial.printf("newCode already logged:  ");
 			newOne.Print();
@@ -260,7 +259,7 @@ void Queue::Print()
 	//Finding number of elements in queue
 	int count = (rear_+maxSize_-front_)%maxSize_ + 1;
 	Serial.print(name_ + " ");
-	if ( verbose>4 ) Serial.printf("front, rear, maxSize: %d  %d  %d:", front_, rear_, maxSize_);
+	if ( verbose_>4 ) Serial.printf("front, rear, maxSize: %d  %d  %d:", front_, rear_, maxSize_);
 	for(int i = 0; i <count; i++)
 	{
 		int index = (front_+i)%maxSize_; // Index of element while travesing circularly from front_
@@ -354,7 +353,7 @@ FaultCode Queue::Rear()
 {
 	if(rear_ == -1)
 	{
-		if ( verbose>0 ) Serial.println(name_ + ": no rear; empty queue");
+		if ( verbose_>0 ) Serial.println(name_ + ": no rear; empty queue");
 		return FaultCode(0UL, 0UL);
 	}
 	return A_[rear_];
@@ -382,7 +381,7 @@ int Queue::storeNVM(const int start)
 {
 	if ( !storing_ )
 	{
-		if ( verbose>0 ) Serial.println(name_ + ":  not storing NVM");
+		if ( verbose_>0 ) Serial.println(name_ + ":  not storing NVM");
 		return start;
 	}
 	int p = start;
@@ -392,7 +391,7 @@ int Queue::storeNVM(const int start)
 	for ( uint8_t i=0; i<maxSize_; i++ )
 	{
 		FaultCode val = getRaw(i);
-		if ( verbose>4 ) Serial.printf("%d %d %d\n", val.time, val.code, val.reset);
+		if ( verbose_>4 ) Serial.printf("%d %d %d\n", val.time, val.code, val.reset);
 		EEPROM.put(p, val); p += sizeof(FaultCode);
 	}
 	// verify
@@ -401,20 +400,20 @@ int Queue::storeNVM(const int start)
 	FaultCode tc, raw;
 	p = start;
 	EEPROM.get(p, test); if ( test!=front_   ) success = false; p += sizeof(int);
-	if ( verbose>5 ) Serial.printf("%s read %d ?= %d demand\n", name_.c_str(), test, front_);
+	if ( verbose_>5 ) Serial.printf("%s read %d ?= %d demand\n", name_.c_str(), test, front_);
 	EEPROM.get(p, test); if ( test!=rear_    ) success = false; p += sizeof(int);
-	if ( verbose>5 ) Serial.printf("%s read %d ?= %d demand\n", name_.c_str(), test, rear_);
+	if ( verbose_>5 ) Serial.printf("%s read %d ?= %d demand\n", name_.c_str(), test, rear_);
 	EEPROM.get(p, test); if ( test!=maxSize_ ) success = false; p += sizeof(int);
-	if ( verbose>5 ) Serial.printf("%s read %d ?= %d demand\n", name_.c_str(), test, maxSize_);
+	if ( verbose_>5 ) Serial.printf("%s read %d ?= %d demand\n", name_.c_str(), test, maxSize_);
 	for ( uint8_t i=0; i<maxSize_; i++ )
 	{
 		FaultCode raw = getRaw(i);
 		EEPROM.get(p, tc);
 		if ( tc.time!=raw.time || tc.code!=raw.code || tc.reset!=raw.reset ) success = false;
-		if ( verbose>5 ) Serial.printf("%s read time %d ?= %d demand, code %d ?= %d, reset %d ?= %d\n", name_.c_str(), tc.time, raw.time, tc.code, raw.code, tc.reset, raw.reset);
+		if ( verbose_>5 ) Serial.printf("%s read time %d ?= %d demand, code %d ?= %d, reset %d ?= %d\n", name_.c_str(), tc.time, raw.time, tc.code, raw.code, tc.reset, raw.reset);
 		p += sizeof(FaultCode);
 	}
-	if ( verbose>4 && success ) Serial.printf("%s Verified.\n", name_.c_str());
+	if ( verbose_>4 && success ) Serial.printf("%s Verified.\n", name_.c_str());
 	if ( success ) return p;
 	else 					 return -1;
 }

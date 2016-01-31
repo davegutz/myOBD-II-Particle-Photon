@@ -68,14 +68,18 @@ public:
 class Queue
 {
 private:
-	int front_, rear_, maxSize_, gmt_;
-	String name_;
-	bool storing_;
+	int 			front_;
+	int 			rear_;
+	int 			maxSize_;
+	int 			gmt_;
+	String 		name_;
+	bool 			storing_;
 	FaultCode *A_;
+	int 			verbose_;
 public:
 	Queue(void);
-	Queue(const int maxSize, const int GMT, const String name, const bool storing);
-	Queue(const int front, const int rear, const int maxSize, const int GMT, const String name, const bool storing);
+	Queue(const int maxSize, const int GMT, const String name, const bool storing, const int verbose);
+	Queue(const int front, const int rear, const int maxSize, const int GMT, const String name, const bool storing, const int verbose);
 	int  clearNVM(int);
 	bool IsEmpty(void);
 	bool IsFull(void);

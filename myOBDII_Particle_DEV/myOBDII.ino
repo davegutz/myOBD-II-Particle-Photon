@@ -32,36 +32,34 @@ SYSTEM_THREAD(ENABLED);      // Make sure heat system code always run regardless
 #include "mySubs.h"
 
 //
-// Test features usually commented
+// Test features
 bool              jumper            = false;    // not using jumper
 extern int        verbose           = 5;        // Debugging Serial.print as much as you can tolerate.  0=none
 bool              clearNVM          = false;    // Command to reset NVM on fresh load
 bool              NVM_StoreAllowed  = false;    // Allow storing jumper faults
 bool              ignoring          = true;    // Ignore jumper faults
-//
+
 // Disable flags if needed.  Usually commented
 // #define DISABLE
-//
+
 // Usually defined
 // #define USUALLY
-//
+
 // Constants always defined
-// #define CONSTANT
 #define MAX_SIZE 30  //maximum size of the array that will store Queue.
 // Caution:::do not exceed about 30 for two code quees
 #define DISPLAY_DELAY 		30000UL 		// Fault code display period
 #define READ_DELAY 				30000UL 		// Fault code reading period
 #define RESET_DELAY 			90000UL 		// Fault reset period
 #define SAMPLING_DELAY		5000UL 		  // Data sampling period
-//
+
 // Dependent includes.   Easier to debug code if remove unused include files
 #include "SparkFunMicroOLED.h"  // Include MicroOLED library
 #include "math.h"fcff
 //SYSTEM_MODE(MANUAL);
 
 // Global variables
-long              activeCode[100];
-String            completeness;               // Internal readiness
+long              activeCode[MAX_SIZE];
 /*                     Test enabled	Test incomplete
 Empty                  A0-A7
 Reserved	             B3	           B7
@@ -78,14 +76,15 @@ Heated Catalyst	      C1	         D1
 Catalyst	           C0	           D0
 */
 int               coolantTemp   = 0;          // Coolant temp -40 to 215 C
-long              codes[100];
+long              codes[MAX_SIZE];
 Queue*            F;                          // Faults
 Queue*            I;                          // Impending faults
 const int         faultNVM 			= 1; 					// NVM location
 const int         GMT 					= -5; 				// Greenwich mean time adjustment, hrs
 int               impendNVM;  								// NVM locations, calculated
 MicroOLED         oled;
-long              pendingCode[100];
+uint8_t           ncodes        = 0;          // Number of fault codes
+long              pendingCode[MAX_SIZE];
 char              rxData[4*101];
 int               timeSinceRes  = 0;          // min 65535
 int               warmsSinceRes = 0;          // 255
@@ -93,7 +92,6 @@ int               kmSinceRes    = 0;          // km 65535
 int               vehicleSpeed  = 0;          // kph 255
 int               vehicleRPM    = 0;          // rpm 16383
 
-extern uint8_t    ncodes        = 0;
 extern char       rxIndex       = 0;
 
 
@@ -106,18 +104,20 @@ void setup()
   Serial1.begin(9600);
   oled.begin();    // Initialize the OLED
 
-  F = new Queue(MAX_SIZE, GMT, "FAULTS", (!jumper||NVM_StoreAllowed));
-	I = new Queue(MAX_SIZE, GMT, "IMPENDING", (!jumper||NVM_StoreAllowed));
+  F = new Queue(MAX_SIZE, GMT, "FAULTS",    (!jumper||NVM_StoreAllowed), verbose);
+	I = new Queue(MAX_SIZE, GMT, "IMPENDING", (!jumper||NVM_StoreAllowed), verbose);
 	if ( !clearNVM )
 	{
-		impendNVM = F->loadNVM(faultNVM);
-		I->loadNVM(impendNVM);
+		impendNVM   = F->loadNVM(faultNVM);
+		int endNVM  = I->loadNVM(impendNVM);
+    if ( endNVM>EEPROM.length() ) // Too much NVM
+    {
+      display(&oled, 0, 0, "NVM OVER", 300000, page, font8x16, ALL);
+    }
+    delay(1500);
 	}
-  if ( jumper )
-  {
-    delay(500);  display(&oled, 0, 0, "JUMPER", 1, 0, 1);  delay(1500);
-  }
-  delay(1500);  display(&oled, 0, 0, "ACTIVE", 1, 0, 1);  delay(500);
+  if ( jumper ) display(&oled, 0, 0, "JUMPER", 3000, page, font5x7, ALL);
+  display(&oled, 0, 0, "ACTIVE", 500, page, font5x7, ALL);
 
   String dispStr;
   if ( F->printActive(&dispStr)>0 );
@@ -125,23 +125,20 @@ void setup()
   display(&oled, 0, 1, ("F:" + dispStr));
   if ( I->printActive(&dispStr)>0 );
   else dispStr = "----  ";
-  display(&oled, 0, 3, ("I:" + dispStr));
-  delay(10000);
+  display(&oled, 0, 3, ("I:" + dispStr), 10000);
 
-  display(&oled, 0, 0, "STORED", 1, 0, 1);
+  display(&oled, 0, 0, "STORED", 0, page, font5x7, ALL);
   if ( F->printInActive(&dispStr, 2)>0 );
   else dispStr = "----  ";
-  display(&oled, 0, 1, ("F:" + dispStr));
-  delay(10000);
+  display(&oled, 0, 1, ("F:" + dispStr), 10000);
 
-//TODO enumerated type for last three display argumenets.   Add delay to arguments (before first optional)
-  delay(1500);  display(&oled, 0, 0, "WAIT", 1, 0, 1);  delay(500);
 
   //Reset the OBD-II-UART
+  display(&oled, 0, 0, "WAIT", 500, page, font5x7, ALL);
   Serial1.println("ATZ");
   delay(1000);
   getResponse(&oled, rxData);
-  display(&oled, 0, 1, String(rxData), 0, 0);
+  display(&oled, 0, 1, String(rxData));
   Serial.printf("setup ending\n");
   delay(2000);
   WiFi.off();
@@ -172,11 +169,7 @@ void loop(){
   sampling	= ((now-lastSample) >= SAMPLING_DELAY);
 	if ( sampling ) lastSample = now;
 
-  if ( jumper )
-  {
-    display(&oled, 0, 0, "JUMPER");
-    delay(1000);
-  }
+  if ( jumper ) display(&oled, 0, 0, "JUMPER", 1000);
 
   if ( reading )
   {
@@ -184,16 +177,16 @@ void loop(){
     // Codes
     if ( jumper )
     {
-      getJumpFaultCodes(&oled, "03", "43 01 20 02", faultTime, rxData, codes, \
+      getJumpFaultCodes(&oled, "03", "43 01 20 02", faultTime, rxData, &ncodes, codes, \
         activeCode, ignoring, F);
       delay(1000);
-      getJumpFaultCodes(&oled, "07", "47 02 20 12 20 13", faultTime, rxData, codes,\
+      getJumpFaultCodes(&oled, "07", "47 02 20 12 20 13", faultTime, rxData, &ncodes, codes,\
         activeCode, ignoring, I);
     }
     else  // ENGINE
     {
-      getCodes(&oled, "03", faultTime, rxData, codes, activeCode,  F);
-      getCodes(&oled, "07", faultTime, rxData, codes, pendingCode, I);
+      getCodes(&oled, "03", faultTime, rxData, &ncodes, codes, activeCode,  F);
+      getCodes(&oled, "07", faultTime, rxData, &ncodes, codes, pendingCode, I);
     }
   }   // reading
 
@@ -206,8 +199,7 @@ void loop(){
       vehicleSpeed = atol(rxData);
       char tmp[100];
       sprintf(tmp, "%3.0f mph  ", float(vehicleSpeed)*0.6);
-      display(&oled, 0, 1, String(tmp));
-      delay(1000);
+      display(&oled, 0, 1, String(tmp), 1000);
     }
     else   // ENGINE
     {
@@ -216,13 +208,11 @@ void loop(){
         vehicleSpeed = strtol(&rxData[4], 0, 16);
         char tmp[100];
         sprintf(tmp, "%3.0f mph  ", float(vehicleSpeed)*0.6);
-        display(&oled, 0, 0, String(tmp));
-        delay(200);
+        display(&oled, 0, 0, String(tmp), 200);
       }
       else
       {
-        display(&oled, 0, 0, "---- mph  ");
-        delay(200);
+        display(&oled, 0, 0, "---- mph  ", 200);
       }
     }
 
@@ -231,65 +221,39 @@ void loop(){
     {
       pingJump(&oled, "010C", "900", rxData);
       vehicleRPM = atol(rxData);
-      display(&oled, 0, 1, String(vehicleRPM)+" rpm  ");
-      delay(1000);
+      display(&oled, 0, 1, String(vehicleRPM)+" rpm  ", 1000);
     }
     else // ENGINE
     {
       if (ping(&oled, "010C", rxData) == 0)
       {
         vehicleRPM = strtol(&rxData[4], 0, 16)/4;
-        display(&oled, 0, 0, (String(vehicleRPM)+" rpm"));
-        delay(200);
+        display(&oled, 0, 0, (String(vehicleRPM)+" rpm"), 200);
       }
       else
       {
-        display(&oled, 0, 0, "---- rpm  ");
-        delay(200);
+        display(&oled, 0, 0, "---- rpm  ", 200);
       }
     }
 
-
-/*  Not available 2007 Mazdaspeed3
-    // Time Since Reset 2 bytes
-    if ( jumper )
-    {
-      pingJump(&oled, "4E", "65535", rxData);
-      timeSinceRes = atol(rxData);
-      display(&oled, 0, 1, String(timeSinceRes)+" min");
-      delay(1000);
-    }
-    else // ENGINE
-    {
-      if (ping(&oled, "4E", rxData) == 0)
-      {
-        timeSinceRes = strtol(&rxData[2], 0, 16); // min
-        display(&oled, 0, 0, (String(timeSinceRes)+" min"));
-        delay(100);
-      }
-    }
-*/
 
     // Warmups Since Reset 1 byte
     if ( jumper )
     {
       pingJump(&oled, "0130", "255", rxData);
       warmsSinceRes = atol(rxData);
-      display(&oled, 0, 1, String(warmsSinceRes)+" wms  ");
-      delay(1000);
+      display(&oled, 0, 1, String(warmsSinceRes)+" wms  ", 1000);
     }
     else // ENGINE
     {
       if (ping(&oled, "0130", rxData) == 0)
       {
         warmsSinceRes = strtol(&rxData[4], 0, 16); // number
-        display(&oled, 0, 0, (String(warmsSinceRes)+" wms  "));
-        delay(500);
+        display(&oled, 0, 0, (String(warmsSinceRes)+" wms  "), 500);
       }
       else
       {
-        display(&oled, 0, 0, "---- wms  ");
-        delay(200);
+        display(&oled, 0, 0, "---- wms  ", 200);
       }
     }
 
@@ -300,8 +264,7 @@ void loop(){
       kmSinceRes = atol(rxData);
       char tmp[100];
       sprintf(tmp, "%5.0f mi ", float(kmSinceRes)*0.6);
-      display(&oled, 0, 1, String(tmp));
-      delay(1000);
+      display(&oled, 0, 1, String(tmp), 1000);
     }
     else // ENGINE
     {
@@ -310,13 +273,11 @@ void loop(){
         kmSinceRes = strtol(&rxData[4], 0, 16); // km
         char tmp[100];
         sprintf(tmp, "%5.0f mi ", float(kmSinceRes)*0.6);
-        display(&oled, 0, 0, String(tmp));
-        delay(500);
+        display(&oled, 0, 0, String(tmp), 500);
       }
       else
       {
-        display(&oled, 0, 0, "---- mi   ");
-        delay(200);
+        display(&oled, 0, 0, "---- mi   ", 200);
       }
     }
 
@@ -328,8 +289,7 @@ void loop(){
       coolantTemp = atoi(rxData);
       char tmp[100];
       sprintf(tmp, "%3.0f F    ", float(coolantTemp)*9/5+32);
-      display(&oled, 0, 1, String(tmp));
-      delay(1000);
+      display(&oled, 0, 1, String(tmp), 1000);
     }
     else // ENGINE
     {
@@ -338,13 +298,11 @@ void loop(){
         coolantTemp = strtol(&rxData[4], 0, 16)-40;  // C
         char tmp[100];
         sprintf(tmp, "%3.0f F    ", float(coolantTemp)*9/5+32);
-        display(&oled, 0, 0, String(tmp));
-        delay(200);
+        display(&oled, 0, 0, String(tmp), 200);
       }
       else
       {
-        display(&oled, 0, 0, "---- F   ");
-        delay(200);
+        display(&oled, 0, 0, "---- F   ", 200);
       }
     }
 
@@ -352,37 +310,27 @@ void loop(){
     if ( jumper )
     {
       pingJump(&oled, "0141", "007E500", rxData);
-      completeness = String(rxData);
-      display(&oled, 0, 1, completeness);
-      delay(1000);
+      display(&oled, 0, 1, String(rxData), 1000);
       pingJump(&oled, "0101", "1010101010", rxData);
-      completeness = String(rxData);
-      display(&oled, 0, 1, completeness);
-      delay(1000);
+      display(&oled, 0, 1, String(rxData), 1000);
     }
     else // ENGINE
     {
       if (ping(&oled, "0141", rxData) == 0)
       {
-        completeness = String(&rxData[5]);  // omit empty A
-        display(&oled, 0, 0, completeness);
-        delay(1000);
+        display(&oled, 0, 0, String(&rxData[5]), 1000);
       }
       else
       {
-        display(&oled, 0, 0, "-------------");
-        delay(1000);
+        display(&oled, 0, 0, "-------------", 1000);
       }
       if (ping(&oled, "0101", rxData) == 0)
       {
-        completeness = String(&rxData[4]);  // omit empty A
-        display(&oled, 0, 0, completeness);
-        delay(1000);
+        display(&oled, 0, 0, String(&rxData[4]), 1000);
       }
       else
       {
-        display(&oled, 0, 0, "-------------");
-        delay(1000);
+        display(&oled, 0, 0, "-------------", 1000);
       }
     }
 
@@ -396,11 +344,9 @@ void loop(){
     uint8_t line;
     if ( jumper ) line = 2; else line = 1;
     String dispStr;
-		if ( F->printActive(&dispStr)>0 );
-		else dispStr = "----  ";
+		if ( F->printActive(&dispStr)<=0 ) dispStr = "----  ";
     display(&oled, 0, line, ("F:" + dispStr));
-		if ( I->printActive(&dispStr)>0 );
-    else dispStr = "----  ";
+		if ( I->printActive(&dispStr)<=0 ) dispStr = "----  ";
     display(&oled, 0, line+1, ("I:" + dispStr));
 	} // displaying
 
@@ -414,6 +360,10 @@ void loop(){
       if ( verbose>3 ) Serial.printf("clear faultNVM=%d\n", impendNVM);
       finalNVM  = I->clearNVM(impendNVM);
       if ( verbose>3 ) Serial.printf("clear impendNVM=%d\n", finalNVM);
+      if ( finalNVM>EEPROM.length() ) // Too much NVM
+      {
+        display(&oled, 0, 0, "NVM OVER", 300000, page, font8x16, ALL);
+      }
     }
 	  else
     {
@@ -421,6 +371,10 @@ void loop(){
       if ( verbose>3 ) Serial.printf("store faultNVM=%d\n", impendNVM);
       finalNVM  = I->storeNVM(impendNVM);
       if ( verbose>3 ) Serial.printf("store impendNVM=%d\n", finalNVM);
+      if ( finalNVM>EEPROM.length() ) // Too much NVM
+      {
+        display(&oled, 0, 0, "NVM OVER", 300000, page, font8x16, ALL);
+      }
     }
     if ( impendNVM<0 || finalNVM<0 )
       if ( clearNVM )

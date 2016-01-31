@@ -2,13 +2,12 @@
 #include "myQueue.h"
 #include "mySubs.h"
 
-extern uint8_t    ncodes;
 extern char       rxIndex;
 extern int        verbose;
 
 // Simple OLED print
 void  display(MicroOLED* oled, const uint8_t x, const uint8_t y, const String str,\
-   const uint8_t clear, const uint8_t type, const uint8_t clearA)
+   const int hold, const ClearType clear, const FontType type, const uint8_t clearA)
 {
   Serial.println(str);
   if (clearA) oled->clear(ALL);
@@ -17,11 +16,12 @@ void  display(MicroOLED* oled, const uint8_t x, const uint8_t y, const String st
   oled->setCursor(x, y*oled->getFontHeight());
   oled->print(str);
   oled->display();
+  delay(hold);
 }
 
 // Simple OLED print
 void  displayStr(MicroOLED* oled, const uint8_t x, const uint8_t y, const String str, \
-  const uint8_t clear, const uint8_t type, const uint8_t clearA)
+  const int hold, const ClearType clear, const FontType type, const uint8_t clearA)
 {
   Serial.print(str);
   if (clearA) oled->clear(ALL);
@@ -30,14 +30,15 @@ void  displayStr(MicroOLED* oled, const uint8_t x, const uint8_t y, const String
   oled->setCursor(x, y*oled->getFontHeight());
   oled->print(str);
   oled->display();
+  delay(hold);
 }
 
 // Get and display engine codes
-void  getCodes(MicroOLED* oled, const String cmd, unsigned long faultTime, char* rxData, long codes[100], long activeCode[100], Queue *F)
+void  getCodes(MicroOLED* oled, const String cmd, unsigned long faultTime, char* rxData, uint8_t *ncodes, long codes[100], long activeCode[100], Queue *F)
 {
   if ( ping(oled, cmd, rxData) == 0 ) // success
   {
-    int nActive = parseCodes(rxData, codes);
+    int nActive = parseCodes(rxData, codes, ncodes);
     for ( int i=0; i<nActive; i++ )
     {
       F->newCode(faultTime, codes[i]);
@@ -52,10 +53,10 @@ void  getCodes(MicroOLED* oled, const String cmd, unsigned long faultTime, char*
 }
 
 // Get and display jumper codes
-void  getJumpFaultCodes(MicroOLED* oled, const String cmd, const String val, unsigned long faultTime, char* rxData, long codes[100], long activeCode[100], const bool ignoring, Queue *F)
+void  getJumpFaultCodes(MicroOLED* oled, const String cmd, const String val, unsigned long faultTime, char* rxData, uint8_t *ncodes, long codes[100], long activeCode[100], const bool ignoring, Queue *F)
 {
   pingJump(oled, cmd, val, rxData);
-  int nActive = parseCodes(rxData, codes);
+  int nActive = parseCodes(rxData, codes, ncodes);
   for ( int i=0; (i<nActive&&!ignoring); i++ )
   {
     F->newCode(faultTime, codes[i]);
@@ -121,30 +122,30 @@ int   getResponse(MicroOLED* oled, char* rxData)
 }
 
 // Parse the OBD-II long string of codes returned by UART.
-int   parseCodes(const char *rxData, long *codes)
+int   parseCodes(const char *rxData, long *codes, uint8_t *ncodes)
 {
     int n = strlen(rxData);
     if ( verbose>4 ) Serial.printf("rxData[%d]=%s\n", n, rxData);
     if ( n < 8 )
     {
-      ncodes = 0;
+      *ncodes = 0;
       return(0);
     }
     char numC[3];
     numC[0] = rxData[2];
     numC[1] = rxData[3];
     numC[2] = '\0';
-    ncodes = strtol(numC, NULL, 10);
-    if ( ncodes*4>(n-4) || ncodes>100 )
+    *ncodes = strtol(numC, NULL, 10);
+    if ( *ncodes*4>(n-4) || *ncodes>100 )
     {
-      ncodes = 0;
+      *ncodes = 0;
       return(0);
     }
     int i = 0;
     int j = 4;
     char C[5];
-    if ( verbose>4 ) Serial.printf("codes[%d]=", ncodes);
-    while ( i < ncodes )
+    if ( verbose>4 ) Serial.printf("codes[%d]=", *ncodes);
+    while ( i < *ncodes )
     {
       C[0] = rxData[j++];
       C[1] = rxData[j++];
@@ -154,8 +155,8 @@ int   parseCodes(const char *rxData, long *codes)
       codes[i++] = strtol(C, NULL, 10);
       if ( verbose>4 ) Serial.printf("%ld,", codes[i-1]);
     }
-    if ( verbose>4 && ncodes>0 ) Serial.printf("\n");
-    return(ncodes);
+    if ( verbose>4 && *ncodes>0 ) Serial.printf("\n");
+    return(*ncodes);
 }
 
 
@@ -170,7 +171,7 @@ int   ping(MicroOLED* oled, const String cmd, char* rxData)
   notConnected = getResponse(oled, rxData)  || notConnected;
   if (notConnected)
   {
-    display(oled, 0, 0, "No conn>", 1, 1);
+    display(oled, 0, 0, "No conn>", 0, page, font8x16);
     int count = 0;
     while (!Serial.available() && count++<5) delay(1000);
     while (!Serial.read());
@@ -183,23 +184,23 @@ int   ping(MicroOLED* oled, const String cmd, char* rxData)
 int   pingJump(MicroOLED* oled, const String cmd, const String val, char* rxData)
 {
   if (verbose>3) Serial.println("Tx:" + cmd);
-  delay(1000);
+  delay(500);
   Serial1.println(cmd);
-  delay(1000);
+  delay(500);
   int notConnected = rxFlushToChar(oled, '\r');
-  delay(1000);
+  delay(500);
   if (verbose>3) Serial.println("Tx:" + val);
   Serial1.println(val);
-  delay(1000);
+  delay(500);
   notConnected = getResponse(oled, rxData) || notConnected;
   if (notConnected)
   {
-    display(oled, 0, 0, "No conn>", 1, 1);
+    display(oled, 0, 0, "No conn>", 0, page, font8x16);
     int count = 0;
     while (!Serial.available() && count++<5) delay(1000);
     while (!Serial.read());
   }
-  delay(1000);
+  delay(500);
   return(notConnected);
 }
 
@@ -209,7 +210,7 @@ void  pingReset(MicroOLED* oled, const String cmd)
   int notConnected = rxFlushToChar(oled, '>');
   if (notConnected)
   {
-    display(oled, 0, 0, "No conn>", 1, 1);
+    display(oled, 0, 0, "No conn>", 0, page, font8x16);
     int count = 0;
     while (!Serial.available() && count++<5) delay(1000);
     while (!Serial.read());  // Blocking read
