@@ -242,18 +242,18 @@ void loop(){
     {
       pingJump(&oled, "0130", "255", rxData);
       warmsSinceRes = atol(rxData);
-      display(&oled, 0, 1, String(warmsSinceRes)+" wms  ", 1000);
+      display(&oled, 0, 1, String(warmsSinceRes)+" wms   ", 1000);
     }
     else // ENGINE
     {
       if (ping(&oled, "0130", rxData) == 0)
       {
         warmsSinceRes = strtol(&rxData[4], 0, 16); // number
-        display(&oled, 0, 0, (String(warmsSinceRes)+" wms  "), 500);
+        display(&oled, 0, 0, (String(warmsSinceRes)+" wms   "), 500);
       }
       else
       {
-        display(&oled, 0, 0, "---- wms  ", 200);
+        display(&oled, 0, 0, "---- wms   ", 200);
       }
     }
 

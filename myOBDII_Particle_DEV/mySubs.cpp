@@ -36,6 +36,11 @@ void  displayStr(MicroOLED* oled, const uint8_t x, const uint8_t y, const String
 // Get and display engine codes
 void  getCodes(MicroOLED* oled, const String cmd, unsigned long faultTime, char* rxData, uint8_t *ncodes, long codes[100], long activeCode[100], Queue *F)
 {
+  if ( faultTime<1454540170 || faultTime>1770159369 )  // Validation;  time on 03-Feb-2016 and 03-Feb-2026
+  {
+    Serial.printf("getCodes:  bad time = %ld\n", faultTime);
+    return;
+  }
   if ( ping(oled, cmd, rxData) == 0 ) // success
   {
     int nActive = parseCodes(rxData, codes, ncodes);
@@ -77,11 +82,11 @@ int   getResponse(MicroOLED* oled, char* rxData)
   {
     Serial.printf("Rx:");
   }
-  else delay(100);
+  else delay(150);
   //Keep reading characters until we get a carriage return
   bool  notFound  = true;
   int   count     = 0;
-  while (notFound && rxIndex<20 && ++count<45)
+  while (notFound && rxIndex<100 && ++count<100)
   {
     if(Serial1.available() > 0)
     {
@@ -92,7 +97,7 @@ int   getResponse(MicroOLED* oled, char* rxData)
         if ( verbose>4 ){
           Serial.printf(";\n");
         }
-        else delay(100);
+        else delay(150);
         notFound = false;
       }
       else    // New char
@@ -107,7 +112,7 @@ int   getResponse(MicroOLED* oled, char* rxData)
           Serial.printf("%c", inChar);
           if ( verbose>5 ) Serial.printf("]");
         }
-        else delay(100);
+        else delay(150);
       }
     }
     else{   // !available
@@ -115,7 +120,7 @@ int   getResponse(MicroOLED* oled, char* rxData)
       {
         Serial.printf(".");
       }
-      else delay(100);
+      else delay(150);
     }
   }
   return (notFound);
@@ -144,7 +149,7 @@ int   parseCodes(const char *rxData, long *codes, uint8_t *ncodes)
     int i = 0;
     int j = 4;
     char C[5];
-    if ( verbose>4 ) Serial.printf("codes[%d]=", *ncodes);
+    if ( verbose>4 ) Serial.printf("parseCodes: codes[%d]=", *ncodes);
     while ( i < *ncodes )
     {
       C[0] = rxData[j++];
@@ -152,8 +157,17 @@ int   parseCodes(const char *rxData, long *codes, uint8_t *ncodes)
       C[2] = rxData[j++];
       C[3] = rxData[j++];
       C[4] = '\0';
-      codes[i++] = strtol(C, NULL, 10);
-      if ( verbose>4 ) Serial.printf("%ld,", codes[i-1]);
+      long newCode = strtol(C, NULL, 10);
+      if ( newCode>0 && newCode<3500 )  // Validation
+      {
+        codes[i++] = newCode;
+        if ( verbose>4 ) Serial.printf("%ld,", codes[i-1]);
+      }
+      else
+      {
+        *ncodes--;
+        Serial.printf("[rejecting bad code %ld],", newCode);
+      }
     }
     if ( verbose>4 && *ncodes>0 ) Serial.printf("\n");
     return(*ncodes);
@@ -165,7 +179,7 @@ int   ping(MicroOLED* oled, const String cmd, char* rxData)
 {
   int notConnected = rxFlushToChar(oled, '>');
   if (verbose>3) Serial.println("Tx:" + cmd);
-  else delay(100);
+  else delay(150);
   Serial1.println(cmd + '\0');
   notConnected = rxFlushToChar(oled, '\r')  || notConnected;
   notConnected = getResponse(oled, rxData)  || notConnected;
@@ -174,7 +188,7 @@ int   ping(MicroOLED* oled, const String cmd, char* rxData)
     display(oled, 0, 0, "No conn>", 0, page, font8x16);
     int count = 0;
     while (!Serial.available() && count++<5) delay(1000);
-    while (!Serial.read());
+    //while (!Serial.read()); // Blocking read
   }
   else if ( strstr(rxData, "NODATA") ) notConnected = 1;
   return (notConnected);
@@ -198,7 +212,7 @@ int   pingJump(MicroOLED* oled, const String cmd, const String val, char* rxData
     display(oled, 0, 0, "No conn>", 0, page, font8x16);
     int count = 0;
     while (!Serial.available() && count++<5) delay(1000);
-    while (!Serial.read());
+    //while (!Serial.read());   // Blocking read
   }
   delay(500);
   return(notConnected);
@@ -213,7 +227,7 @@ void  pingReset(MicroOLED* oled, const String cmd)
     display(oled, 0, 0, "No conn>", 0, page, font8x16);
     int count = 0;
     while (!Serial.available() && count++<5) delay(1000);
-    while (!Serial.read());  // Blocking read
+    //while (!Serial.read());  // Blocking read
   }
   if (verbose>3) Serial.println("Tx:" + cmd);
   Serial1.println(cmd + '\0');
@@ -228,11 +242,11 @@ int   rxFlushToChar(MicroOLED* oled, const char pchar)
   {
     Serial.printf("Rx:");
   }
-  else delay(100);
+  else delay(150);
   //Keep reading characters until we get a carriage return
   bool notFound = true;
   int count = 0;
-  while (notFound && rxIndex<20 && ++count<45)
+  while (notFound && rxIndex<100 && ++count<100)
   {
     if(Serial1.available() > 0)
     {
@@ -242,7 +256,7 @@ int   rxFlushToChar(MicroOLED* oled, const char pchar)
         {
           Serial.printf("%c;\n", inChar);
         }
-        else delay(100);
+        else delay(150);
         notFound = false;
       }
       else    // New char
@@ -256,7 +270,7 @@ int   rxFlushToChar(MicroOLED* oled, const char pchar)
           Serial.printf("%c", inChar);
           if ( verbose>5 ) Serial.printf(">");
         }
-        else delay(100);
+        else delay(150);
       }
     }
     else
@@ -265,7 +279,7 @@ int   rxFlushToChar(MicroOLED* oled, const char pchar)
       {
         Serial.printf(",");
       }
-      else delay(100);
+      else delay(150);
     }
   }
   return (notFound);
