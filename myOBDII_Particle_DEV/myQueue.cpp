@@ -43,7 +43,7 @@ int Queue::clearNVM(int start)
 	for ( uint8_t i=0; i<maxSize_; i++ )
 	{
 		EEPROM.get(p, tc);
-		Serial.printf("%u %u %d\n", tc.time, tc.code, tc.reset);
+		Serial.printf("%u P%04u %d\n", tc.time, tc.code, tc.reset);
 		if ( tc.time!=val.time || tc.code!=val.code || tc.reset!=val.reset ) return -1;
 		p += sizeof(FaultCode);
 	}
@@ -73,7 +73,7 @@ void Queue::Dequeue()
 // Inserts an element in queue at rear_ end
 void Queue::Enqueue(const FaultCode x)
 {
-	Serial.printf("Enqueuing %d\n", x.code);
+	Serial.printf("Enqueuing P%04u\n", x.code);
 	if(IsFull())
 	{
 		if ( verbose_>0 ) Serial.println(name_ + ": queue is full");
@@ -93,7 +93,7 @@ void Queue::Enqueue(const FaultCode x)
 // Inserts an element in queue at rear_ end.  Pops one off if full
 void Queue::EnqueueOver(const FaultCode x)
 {
-	if ( verbose_>4 ) Serial.printf("Enqueuing %d\n", x.code);
+	if ( verbose_>4 ) Serial.printf("Enqueuing %u\n", x.code);
 	if(IsFull())
 	{
 		Queue::Dequeue();
@@ -169,7 +169,7 @@ int Queue::loadNVM(const int start)
 	int front; 		EEPROM.get(p, front); 	p += sizeof(int);
 	int rear;   	EEPROM.get(p, rear);  	p += sizeof(int);
 	int maxSize; 	EEPROM.get(p, maxSize); p += sizeof(int);
-	if ( verbose_>4 ) Serial.printf("Queue::loadNVM:  front, rear, maxSize:  %d,%d,%d\n", front, rear, maxSize);  delay(2000);
+	if ( verbose_>4 ) Serial.printf("%s::loadNVM:  front, rear, maxSize:  %d,%d,%d\n", name_.c_str(), front, rear, maxSize);  delay(2000);
 	if ( maxSize==maxSize_	&&					\
 	front<=maxSize_ 	&& front>=-1 &&		 \
 	rear<=maxSize_  	&& rear>=-1 )
@@ -182,9 +182,11 @@ int Queue::loadNVM(const int start)
 			unsigned long tim;
 			FaultCode fc;
 			EEPROM.get(p, fc); p += sizeof(FaultCode);
-			if ( verbose_>4 ) Serial.printf("%d %d %d\n", fc.time, fc.code, fc.reset);
+			if ( verbose_>4 ) Serial.printf("%u P%04u %d\n", fc.time, fc.code, fc.reset);
+			if ( verbose_>4 )	fc.Print();
 			loadRaw(i, fc);
 		}
+		if ( verbose_>4 ) Serial.printf("\n");
 	}
 	else
 	{
@@ -221,7 +223,7 @@ void Queue::newCode(const unsigned long tim, const unsigned long cod)
 		Serial.printf("Front is ");  front.Print(); Serial.printf("\n");
 		Serial.printf("Rear  is ");  rear.Print();  Serial.printf("\n");
 		Serial.printf("Count is %d\n", count);
-		Serial.printf("Checking for %u %u\n", tim, cod);
+		Serial.printf("Checking for %u P%04u\n", tim, cod);
 	}
 	// Queue inserts at rear (FIFO)
 	bool haveIt = false;
@@ -230,7 +232,7 @@ void Queue::newCode(const unsigned long tim, const unsigned long cod)
 	{
 		uint8_t index = (front_+i)%maxSize_; // Index of element while travesing circularly from front_
 		if ( !A_[index].reset && (A_[index].code==newOne.code) ) haveIt = true;
-		if ( verbose_>4 ) Serial.printf("Candidate: reset=%d code=%u \n", A_[index].reset, A_[index].code);
+		if ( verbose_>4 ) Serial.printf("Candidate: reset=%d code=P%04u \n", A_[index].reset, A_[index].code);
 		i++;
 	}
 	if ( !haveIt )
@@ -263,7 +265,7 @@ void Queue::Print()
 	for(int i = 0; i <count; i++)
 	{
 		int index = (front_+i)%maxSize_; // Index of element while travesing circularly from front_
-		Serial.printf("| %d %d %d ", A_[index].time, A_[index].code, A_[index].reset);
+		Serial.printf("| %u P%04u %d ", A_[index].time, A_[index].code, A_[index].reset);
 	}
 	if ( count>0 ) Serial.printf("\n");
 }
@@ -300,7 +302,7 @@ int Queue::printActive()
 			unsigned long t = A_[index].time;
 			Time.zone(gmt_);
 			String codeTime = Time.format(A_[index].time, "%D-%H:%M");
-			Serial.printf("%s %d\n", codeTime.c_str(), A_[index].code);
+			Serial.printf("%s P%04u\n", codeTime.c_str(), A_[index].code);
 		}
 	}
 	return nAct;
@@ -321,7 +323,7 @@ int Queue::printActive(String *str)
 			nAct++;
 			unsigned long t = A_[index].time;
 			Time.zone(gmt_);
-			*str += String(A_[index].code) + " ";
+			*str += "P" + String(A_[index].code) + " ";
 		}
 	}
 	return nAct;
@@ -341,8 +343,9 @@ int  Queue::printInActive(String *str, const int num)
 			nInAct++;
 			unsigned long t = A_[index].time;
 			Time.zone(gmt_);
-			*str += (String(Time.year(t)) + String(Time.month()) + String(Time.day(t))\
-			 		+ "\n    " + String(A_[index].code) + String("\n"));
+			*str += (String(Time.year(t)) + String(Time.month(t)) + String(Time.day(t))\
+			 		+ "\n    P" + String(A_[index].code) + String("\n"));
+			if ( verbose_>4 ) Serial.printf("%s::printInActive:  %u %u\n", name_.c_str(), A_[index].time, A_[index].code);
 		}
 	}
 	return nInAct;
@@ -391,7 +394,7 @@ int Queue::storeNVM(const int start)
 	for ( uint8_t i=0; i<maxSize_; i++ )
 	{
 		FaultCode val = getRaw(i);
-		if ( verbose_>4 ) Serial.printf("%d %d %d\n", val.time, val.code, val.reset);
+		if ( verbose_>4 ) Serial.printf("%u P%04u %d\n", val.time, val.code, val.reset);
 		EEPROM.put(p, val); p += sizeof(FaultCode);
 	}
 	// verify
@@ -410,7 +413,7 @@ int Queue::storeNVM(const int start)
 		FaultCode raw = getRaw(i);
 		EEPROM.get(p, tc);
 		if ( tc.time!=raw.time || tc.code!=raw.code || tc.reset!=raw.reset ) success = false;
-		if ( verbose_>5 ) Serial.printf("%s read time %d ?= %d demand, code %d ?= %d, reset %d ?= %d\n", name_.c_str(), tc.time, raw.time, tc.code, raw.code, tc.reset, raw.reset);
+		if ( verbose_>5 ) Serial.printf("%s read time %u ?= %u demand, code %u ?= %u, reset %d ?= %d\n", name_.c_str(), tc.time, raw.time, tc.code, raw.code, tc.reset, raw.reset);
 		p += sizeof(FaultCode);
 	}
 	if ( verbose_>4 && success ) Serial.printf("%s Verified.\n", name_.c_str());

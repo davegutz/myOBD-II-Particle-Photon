@@ -59,7 +59,7 @@ bool              ignoring          = true;    // Ignore jumper faults
 //SYSTEM_MODE(MANUAL);
 
 // Global variables
-long              activeCode[MAX_SIZE];
+unsigned long      activeCode[MAX_SIZE];
 /*                     Test enabled	Test incomplete
 Empty                  A0-A7
 Reserved	             B3	           B7
@@ -76,7 +76,7 @@ Heated Catalyst	      C1	         D1
 Catalyst	           C0	           D0
 */
 int               coolantTemp   = 0;          // Coolant temp -40 to 215 C
-long              codes[MAX_SIZE];
+unsigned long     codes[MAX_SIZE];
 Queue*            F;                          // Faults
 Queue*            I;                          // Impending faults
 const int         faultNVM 			= 1; 					// NVM location
@@ -84,7 +84,7 @@ const int         GMT 					= -5; 				// Greenwich mean time adjustment, hrs
 int               impendNVM;  								// NVM locations, calculated
 MicroOLED         oled;
 uint8_t           ncodes        = 0;          // Number of fault codes
-long              pendingCode[MAX_SIZE];
+unsigned long     pendingCode[MAX_SIZE];
 char              rxData[4*101];
 int               timeSinceRes  = 0;          // min 65535
 int               warmsSinceRes = 0;          // 255
@@ -357,9 +357,9 @@ void loop(){
     if ( clearNVM )
     {
       impendNVM = F->clearNVM(faultNVM);
-      if ( verbose>3 ) Serial.printf("clear faultNVM=%d\n", impendNVM);
+      if ( verbose>3 ) Serial.printf("clear faultNVM=%ld\n", impendNVM);
       finalNVM  = I->clearNVM(impendNVM);
-      if ( verbose>3 ) Serial.printf("clear impendNVM=%d\n", finalNVM);
+      if ( verbose>3 ) Serial.printf("clear impendNVM=%ld\n", finalNVM);
       if ( finalNVM>EEPROM.length() ) // Too much NVM
       {
         display(&oled, 0, 0, "NVM OVER", 300000, page, font8x16, ALL);
@@ -368,9 +368,9 @@ void loop(){
 	  else
     {
       impendNVM = F->storeNVM(faultNVM);
-      if ( verbose>3 ) Serial.printf("store faultNVM=%d\n", impendNVM);
+      if ( verbose>3 ) Serial.printf("store faultNVM=%ld\n", impendNVM);
       finalNVM  = I->storeNVM(impendNVM);
-      if ( verbose>3 ) Serial.printf("store impendNVM=%d\n", finalNVM);
+      if ( verbose>3 ) Serial.printf("store impendNVM=%ld\n", finalNVM);
       if ( finalNVM>EEPROM.length() ) // Too much NVM
       {
         display(&oled, 0, 0, "NVM OVER", 300000, page, font8x16, ALL);
@@ -401,7 +401,7 @@ void loop(){
     if ( !clearNVM )
     {
       impendNVM = F->storeNVM(faultNVM);
-  	  if ( verbose>3 ) Serial.printf("impendNVM=%d\n", impendNVM);
+  	  if ( verbose>3 ) Serial.printf("impendNVM=%ld\n", impendNVM);
   	  if ( impendNVM<0 ) Serial.printf("Failed post-reset storeNVM\n");
       else Serial.printf("Success post-reset store NVM\n");
     }

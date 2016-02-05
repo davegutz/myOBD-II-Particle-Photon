@@ -34,11 +34,11 @@ void  displayStr(MicroOLED* oled, const uint8_t x, const uint8_t y, const String
 }
 
 // Get and display engine codes
-void  getCodes(MicroOLED* oled, const String cmd, unsigned long faultTime, char* rxData, uint8_t *ncodes, long codes[100], long activeCode[100], Queue *F)
+void  getCodes(MicroOLED* oled, const String cmd, unsigned long faultTime, char* rxData, uint8_t *ncodes, unsigned long codes[100], unsigned long activeCode[100], Queue *F)
 {
   if ( faultTime<1454540170 || faultTime>1770159369 )  // Validation;  time on 03-Feb-2016 and 03-Feb-2026
   {
-    Serial.printf("getCodes:  bad time = %ld\n", faultTime);
+    Serial.printf("getCodes:  bad time = %u\n", faultTime);
     return;
   }
   if ( ping(oled, cmd, rxData) == 0 ) // success
@@ -48,7 +48,7 @@ void  getCodes(MicroOLED* oled, const String cmd, unsigned long faultTime, char*
     {
       F->newCode(faultTime, codes[i]);
       activeCode[i] = codes[i];
-      displayStr(oled, 0, 1, String(activeCode[i]));
+      //displayStr(oled, 0, 1, "getCodes:" + String(activeCode[i]));
       if ( i<nActive-1 ) displayStr(oled, 0, 2, ",");
       delay(1000);
     }
@@ -58,7 +58,7 @@ void  getCodes(MicroOLED* oled, const String cmd, unsigned long faultTime, char*
 }
 
 // Get and display jumper codes
-void  getJumpFaultCodes(MicroOLED* oled, const String cmd, const String val, unsigned long faultTime, char* rxData, uint8_t *ncodes, long codes[100], long activeCode[100], const bool ignoring, Queue *F)
+void  getJumpFaultCodes(MicroOLED* oled, const String cmd, const String val, unsigned long faultTime, char* rxData, uint8_t *ncodes, unsigned long codes[100], unsigned long activeCode[100], const bool ignoring, Queue *F)
 {
   pingJump(oled, cmd, val, rxData);
   int nActive = parseCodes(rxData, codes, ncodes);
@@ -127,7 +127,7 @@ int   getResponse(MicroOLED* oled, char* rxData)
 }
 
 // Parse the OBD-II long string of codes returned by UART.
-int   parseCodes(const char *rxData, long *codes, uint8_t *ncodes)
+int   parseCodes(const char *rxData, unsigned long *codes, uint8_t *ncodes)
 {
     int n = strlen(rxData);
     if ( verbose>4 ) Serial.printf("rxData[%d]=%s\n", n, rxData);
@@ -157,7 +157,7 @@ int   parseCodes(const char *rxData, long *codes, uint8_t *ncodes)
       C[2] = rxData[j++];
       C[3] = rxData[j++];
       C[4] = '\0';
-      long newCode = strtol(C, NULL, 10);
+      unsigned long newCode = strtol(C, NULL, 10);
       if ( newCode>0 && newCode<3500 )  // Validation
       {
         codes[i++] = newCode;

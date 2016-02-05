@@ -59,7 +59,7 @@ public:
 	}
 	void Print()
 	{
-		Serial.printf("| %d %d %d ", time, code, reset);
+		Serial.printf("| %u P%04u %d ", time, code, reset);
 	}
 	~FaultCode(){}
 };
