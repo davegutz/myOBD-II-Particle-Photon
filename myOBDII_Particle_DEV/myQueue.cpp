@@ -169,7 +169,7 @@ int Queue::loadNVM(const int start)
 	int front; 		EEPROM.get(p, front); 	p += sizeof(int);
 	int rear;   	EEPROM.get(p, rear);  	p += sizeof(int);
 	int maxSize; 	EEPROM.get(p, maxSize); p += sizeof(int);
-	if ( verbose_>4 ) Serial.printf("%s::loadNVM:  front, rear, maxSize:  %d,%d,%d\n", name_.c_str(), front, rear, maxSize);  delay(2000);
+	if ( verbose_>3 ) Serial.printf("%s::loadNVM:  front, rear, maxSize:  %d,%d,%d\n", name_.c_str(), front, rear, maxSize);  delay(2000);
 	if ( maxSize==maxSize_	&&					\
 	front<=maxSize_ 	&& front>=-1 &&		 \
 	rear<=maxSize_  	&& rear>=-1 )
@@ -182,11 +182,11 @@ int Queue::loadNVM(const int start)
 			unsigned long tim;
 			FaultCode fc;
 			EEPROM.get(p, fc); p += sizeof(FaultCode);
-			if ( verbose_>4 ) Serial.printf("%u P%04u %d\n", fc.time, fc.code, fc.reset);
-			if ( verbose_>4 )	fc.Print();
+			if ( verbose_>3 && verbose_<6 ) Serial.printf("%u P%04u %d\n", fc.time, fc.code, fc.reset);
+			if ( verbose_>5 )	fc.Print();
 			loadRaw(i, fc);
 		}
-		if ( verbose_>4 ) Serial.printf("\n");
+		if ( verbose_>5 ) Serial.printf("\n");
 	}
 	else
 	{
@@ -326,6 +326,7 @@ int Queue::printActive(String *str)
 			*str += "P" + String(A_[index].code) + " ";
 		}
 	}
+	if ( nAct==0 ) *str = "----  ";
 	return nAct;
 }
 

@@ -130,6 +130,7 @@ void setup()
   display(&oled, 0, 0, "STORED", 0, page, font5x7, ALL);
   if ( F->printInActive(&dispStr, 2)>0 );
   else dispStr = "----  ";
+  display(&oled, 0, 3, ("I:----"));
   display(&oled, 0, 1, ("F:" + dispStr), 10000);
 
 
@@ -198,7 +199,7 @@ void loop(){
       pingJump(&oled, "010D", "60", rxData);
       vehicleSpeed = atol(rxData);
       char tmp[100];
-      sprintf(tmp, "%3.0f mph  ", float(vehicleSpeed)*0.6);
+      sprintf(tmp, "%5.0f  mph", float(vehicleSpeed)*0.6);
       display(&oled, 0, 1, String(tmp), 1000);
     }
     else   // ENGINE
@@ -207,12 +208,12 @@ void loop(){
       {
         vehicleSpeed = strtol(&rxData[4], 0, 16);
         char tmp[100];
-        sprintf(tmp, "%3.0f mph  ", float(vehicleSpeed)*0.6);
+        sprintf(tmp, "%5.0f  mph", float(vehicleSpeed)*0.6);
         display(&oled, 0, 0, String(tmp), 200);
       }
       else
       {
-        display(&oled, 0, 0, "---- mph  ", 200);
+        display(&oled, 0, 0, "----  mph", 200);
       }
     }
 
@@ -221,18 +222,18 @@ void loop(){
     {
       pingJump(&oled, "010C", "900", rxData);
       vehicleRPM = atol(rxData);
-      display(&oled, 0, 1, String(vehicleRPM)+" rpm  ", 1000);
+      display(&oled, 0, 1, String(vehicleRPM)+"  rpm  ", 1000);
     }
     else // ENGINE
     {
       if (ping(&oled, "010C", rxData) == 0)
       {
         vehicleRPM = strtol(&rxData[4], 0, 16)/4;
-        display(&oled, 0, 0, (String(vehicleRPM)+" rpm"), 200);
+        display(&oled, 0, 0, (String(vehicleRPM)+"  rpm"), 200);
       }
       else
       {
-        display(&oled, 0, 0, "---- rpm  ", 200);
+        display(&oled, 0, 0, "----  rpm", 200);
       }
     }
 
@@ -242,14 +243,14 @@ void loop(){
     {
       pingJump(&oled, "0130", "255", rxData);
       warmsSinceRes = atol(rxData);
-      display(&oled, 0, 1, String(warmsSinceRes)+" wms   ", 1000);
+      display(&oled, 0, 1, String(warmsSinceRes)+"   wms   ", 1000);
     }
     else // ENGINE
     {
       if (ping(&oled, "0130", rxData) == 0)
       {
         warmsSinceRes = strtol(&rxData[4], 0, 16); // number
-        display(&oled, 0, 0, (String(warmsSinceRes)+" wms   "), 500);
+        display(&oled, 0, 0, (String(warmsSinceRes)+"   wms   "), 500);
       }
       else
       {
@@ -263,7 +264,7 @@ void loop(){
       pingJump(&oled, "0131", "65535", rxData);
       kmSinceRes = atol(rxData);
       char tmp[100];
-      sprintf(tmp, "%5.0f mi ", float(kmSinceRes)*0.6);
+      sprintf(tmp, "%6.0f  mi", float(kmSinceRes)*0.6);
       display(&oled, 0, 1, String(tmp), 1000);
     }
     else // ENGINE
@@ -272,15 +273,14 @@ void loop(){
       {
         kmSinceRes = strtol(&rxData[4], 0, 16); // km
         char tmp[100];
-        sprintf(tmp, "%5.0f mi ", float(kmSinceRes)*0.6);
+        sprintf(tmp, "%6.0f  mi", float(kmSinceRes)*0.6);
         display(&oled, 0, 0, String(tmp), 500);
       }
       else
       {
-        display(&oled, 0, 0, "---- mi   ", 200);
+        display(&oled, 0, 0, "----    mi", 200);
       }
     }
-
 
     // Coolant temp 1 byte  0105
     if ( jumper )
@@ -288,7 +288,7 @@ void loop(){
       pingJump(&oled, "0105", "215", rxData);
       coolantTemp = atoi(rxData);
       char tmp[100];
-      sprintf(tmp, "%3.0f F    ", float(coolantTemp)*9/5+32);
+      sprintf(tmp, "%7.0f  F", float(coolantTemp)*9/5+32);
       display(&oled, 0, 1, String(tmp), 1000);
     }
     else // ENGINE
@@ -297,36 +297,42 @@ void loop(){
       {
         coolantTemp = strtol(&rxData[4], 0, 16)-40;  // C
         char tmp[100];
-        sprintf(tmp, "%3.0f F    ", float(coolantTemp)*9/5+32);
+        sprintf(tmp, "%7.0f  F", float(coolantTemp)*9/5+32);
         display(&oled, 0, 0, String(tmp), 200);
       }
       else
       {
-        display(&oled, 0, 0, "---- F   ", 200);
+        display(&oled, 0, 0, "------- F", 200);
       }
     }
 
     // Ready bytes  4 bytes
     if ( jumper )
     {
-      pingJump(&oled, "0141", "007E500", rxData);
+      pingJump(&oled, "0101", "101010101010", rxData);
       display(&oled, 0, 1, String(rxData), 1000);
-      pingJump(&oled, "0101", "1010101010", rxData);
+      pingJump(&oled, "0141", "007E500  ", rxData);
       display(&oled, 0, 1, String(rxData), 1000);
     }
     else // ENGINE
     {
-      if (ping(&oled, "0141", rxData) == 0)
+      if (ping(&oled, "0101", rxData) == 0)
       {
-        display(&oled, 0, 0, String(&rxData[5]), 1000);
+        String str = "1-" + String(&rxData[4]);
+        char tmp[100];
+        sprintf(tmp, "%10s", str.c_str());
+        display(&oled, 0, 0, tmp, 1000);
       }
       else
       {
         display(&oled, 0, 0, "-------------", 1000);
       }
-      if (ping(&oled, "0101", rxData) == 0)
+      if (ping(&oled, "0141", rxData) == 0)
       {
-        display(&oled, 0, 0, String(&rxData[4]), 1000);
+        String str = "4-" + String(&rxData[5]);
+        char tmp[100];
+        sprintf(tmp, "%10s", str.c_str());
+        display(&oled, 0, 0, tmp, 1000);
       }
       else
       {
@@ -344,9 +350,9 @@ void loop(){
     uint8_t line;
     if ( jumper ) line = 2; else line = 1;
     String dispStr;
-		if ( F->printActive(&dispStr)<=0 ) dispStr = "----  ";
+		F->printActive(&dispStr);
     display(&oled, 0, line, ("F:" + dispStr));
-		if ( I->printActive(&dispStr)<=0 ) dispStr = "----  ";
+		I->printActive(&dispStr);
     display(&oled, 0, line+1, ("I:" + dispStr));
 	} // displaying
 
@@ -357,9 +363,7 @@ void loop(){
     if ( clearNVM )
     {
       impendNVM = F->clearNVM(faultNVM);
-      if ( verbose>3 ) Serial.printf("clear faultNVM=%ld\n", impendNVM);
       finalNVM  = I->clearNVM(impendNVM);
-      if ( verbose>3 ) Serial.printf("clear impendNVM=%ld\n", finalNVM);
       if ( finalNVM>EEPROM.length() ) // Too much NVM
       {
         display(&oled, 0, 0, "NVM OVER", 300000, page, font8x16, ALL);
@@ -368,9 +372,7 @@ void loop(){
 	  else
     {
       impendNVM = F->storeNVM(faultNVM);
-      if ( verbose>3 ) Serial.printf("store faultNVM=%ld\n", impendNVM);
       finalNVM  = I->storeNVM(impendNVM);
-      if ( verbose>3 ) Serial.printf("store impendNVM=%ld\n", finalNVM);
       if ( finalNVM>EEPROM.length() ) // Too much NVM
       {
         display(&oled, 0, 0, "NVM OVER", 300000, page, font8x16, ALL);
@@ -401,9 +403,8 @@ void loop(){
     if ( !clearNVM )
     {
       impendNVM = F->storeNVM(faultNVM);
-  	  if ( verbose>3 ) Serial.printf("impendNVM=%ld\n", impendNVM);
-  	  if ( impendNVM<0 ) Serial.printf("Failed post-reset storeNVM\n");
-      else Serial.printf("Success post-reset store NVM\n");
+      finalNVM  = I->storeNVM(impendNVM);
+      Serial.printf("Post-reset store NVM\n");
     }
 	}
 
