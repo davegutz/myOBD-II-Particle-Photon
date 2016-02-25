@@ -323,7 +323,10 @@ int Queue::printActive(String *str)
 			nAct++;
 			unsigned long t = A_[index].time;
 			Time.zone(gmt_);
-			*str += "P" + String(A_[index].code) + " ";
+			char c_str[20];
+			sprintf(c_str, "P%04u ", A_[index].code);
+			//*str += "P" + String(A_[index].code) + " ";
+			*str += String(c_str);
 		}
 	}
 	if ( nAct==0 ) *str = "----  ";
@@ -344,8 +347,10 @@ int  Queue::printInActive(String *str, const int num)
 			nInAct++;
 			unsigned long t = A_[index].time;
 			Time.zone(gmt_);
+			char c_str[20];
+			sprintf(c_str, "%04u", A_[index].code);
 			*str += (String(Time.year(t)) + String(Time.month(t)) + String(Time.day(t))\
-			 		+ "\n    P" + String(A_[index].code) + String("\n"));
+			 		+ "\n    P" + String(c_str) + String("\n"));
 			if ( verbose_>4 ) Serial.printf("%s::printInActive:  %u %u\n", name_.c_str(), A_[index].time, A_[index].code);
 		}
 	}

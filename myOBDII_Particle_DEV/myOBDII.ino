@@ -392,7 +392,7 @@ void loop(){
       }
       else // ENGINE
       {
-        if ( F->numActive()>0 )
+        if ( F->numActive()>0 || (I->numActive()>0 && warmsSinceRes>1) )
         {
           pingReset(&oled, "04");
           F->resetAll();
