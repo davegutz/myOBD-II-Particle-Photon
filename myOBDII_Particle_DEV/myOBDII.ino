@@ -4,12 +4,6 @@ Display  CAN-based OBD-II output to OLED.   Tested on Mazdaspeed3 '07'.
 
 See README.md
   Tasks TODO:
-  1.  Function that waits for exact Tx response.
-  2.  Rotable NVM storage function.
-  3.  Setup task scheduler:
-      a.  RPM, KPH on 1 sec
-      b.  DTCs on 30 sec, record into NVM only once each startup.
-      c.  NVM storage with DTCs.
   From ELM327 manual:  monitors for RTS or RS232 input.   Eiter interrupts it aborting any
   activity.   After interrupting, software should always wait for either the prompt character('>' or Hex '3E')
   before sending next command.   CR causes repeat of previous.
@@ -17,6 +11,7 @@ See README.md
 
   Revision history:
   09-Jan-2016   Dave Gutz   Created
+  27-Feb-2016   Dave Gutz   Tune up for this year's inspection
 
   Distributed as-is; no warranty is given.
 */
@@ -127,12 +122,15 @@ void setup()
   else dispStr = "----  ";
   display(&oled, 0, 3, ("I:" + dispStr), 10000);
 
-  display(&oled, 0, 0, "STORED", 0, page, font5x7, ALL);
+  display(&oled, 0, 0, "STORED FAULTS", 0, page, font5x7, ALL);
   if ( F->printInActive(&dispStr, 2)>0 );
   else dispStr = "----  ";
-  display(&oled, 0, 3, ("I:----"));
-  display(&oled, 0, 1, ("F:" + dispStr), 10000);
+  display(&oled, 0, 1, ("F:" + dispStr), 5000);
 
+  display(&oled, 0, 0, "STORED IMPEND", 0, page, font5x7, ALL);
+  if ( I->printInActive(&dispStr, 2)>0 );
+  else dispStr = "----  ";
+  display(&oled, 0, 1, ("I:" + dispStr), 10000);
 
   //Reset the OBD-II-UART
   display(&oled, 0, 0, "WAIT", 500, page, font5x7, ALL);
@@ -321,7 +319,7 @@ void loop(){
         String str = "1-" + String(&rxData[4]);
         char tmp[100];
         sprintf(tmp, "%10s", str.c_str());
-        display(&oled, 0, 0, tmp, 1000);
+        display(&oled, 0, 0, tmp, 1500);
       }
       else
       {
@@ -392,7 +390,7 @@ void loop(){
       }
       else // ENGINE
       {
-        if ( F->numActive()>0 || (I->numActive()>0 && warmsSinceRes>1) )
+        if ( F->numActive()>0 || (I->numActive()>0 && warmsSinceRes>0) )
         {
           pingReset(&oled, "04");
           F->resetAll();
