@@ -122,15 +122,16 @@ void setup()
   else dispStr = "----  ";
   display(&oled, 0, 3, ("I:" + dispStr), 10000);
 
-  display(&oled, 0, 0, "STORED FAULTS", 0, page, font5x7, ALL);
-  if ( F->printInActive(&dispStr, 2)>0 );
-  else dispStr = "----  ";
-  display(&oled, 0, 1, ("F:" + dispStr), 5000);
-
   display(&oled, 0, 0, "STORED IMPEND", 0, page, font5x7, ALL);
   if ( I->printInActive(&dispStr, 2)>0 );
   else dispStr = "----  ";
-  display(&oled, 0, 1, ("I:" + dispStr), 10000);
+  display(&oled, 0, 1, ("I:" + dispStr), 5000);
+
+  display(&oled, 0, 0, "STORED FAULTS", 0, page, font5x7, ALL);
+  if ( F->printInActive(&dispStr, 2)>0 );
+  else dispStr = "----  ";
+  display(&oled, 0, 1, ("F:" + dispStr), 10000);
+
 
   //Reset the OBD-II-UART
   display(&oled, 0, 0, "WAIT", 500, page, font5x7, ALL);
@@ -309,8 +310,6 @@ void loop(){
     {
       pingJump(&oled, "0101", "101010101010", rxData);
       display(&oled, 0, 1, String(rxData), 1000);
-      pingJump(&oled, "0141", "007E500  ", rxData);
-      display(&oled, 0, 1, String(rxData), 1000);
     }
     else // ENGINE
     {
@@ -323,18 +322,7 @@ void loop(){
       }
       else
       {
-        display(&oled, 0, 0, "-------------", 1000);
-      }
-      if (ping(&oled, "0141", rxData) == 0)
-      {
-        String str = "4-" + String(&rxData[5]);
-        char tmp[100];
-        sprintf(tmp, "%10s", str.c_str());
-        display(&oled, 0, 0, tmp, 1000);
-      }
-      else
-      {
-        display(&oled, 0, 0, "-------------", 1000);
+        display(&oled, 0, 0, "-------------", 1500);
       }
     }
 
@@ -390,7 +378,7 @@ void loop(){
       }
       else // ENGINE
       {
-        if ( F->numActive()>0 || (I->numActive()>0 && warmsSinceRes>0) )
+        if ( F->numActive()>0 || (I->numActive()>0 && warmsSinceRes>2) )
         {
           pingReset(&oled, "04");
           F->resetAll();

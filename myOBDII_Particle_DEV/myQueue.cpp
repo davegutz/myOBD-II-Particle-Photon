@@ -349,8 +349,11 @@ int  Queue::printInActive(String *str, const int num)
 			Time.zone(gmt_);
 			char c_str[20];
 			sprintf(c_str, "%04u", A_[index].code);
-			*str += (String(Time.year(t)) + String(Time.month(t)) + String(Time.day(t))\
-			 		+ "\n    P" + String(c_str) + String("\n"));
+			*str += String(Time.year(t));
+			if ( Time.month(t)<10 ) *str += "0";
+			*str += String(Time.month(t));
+			if ( Time.day(t)<10 ) 	*str += "0";
+			*str += String(Time.day(t))	+ "    P" + String(c_str) + String("\n");
 			if ( verbose_>4 ) Serial.printf("%s::printInActive:  %u %u\n", name_.c_str(), A_[index].time, A_[index].code);
 		}
 	}
