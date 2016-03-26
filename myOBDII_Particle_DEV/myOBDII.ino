@@ -32,7 +32,7 @@ bool              jumper            = false;    // not using jumper
 extern int        verbose           = 5;        // Debugging Serial.print as much as you can tolerate.  0=none
 bool              clearNVM          = false;    // Command to reset NVM on fresh load
 bool              NVM_StoreAllowed  = false;    // Allow storing jumper faults
-bool              ignoring          = true;    // Ignore jumper faults
+bool              ignoring          = true;     // Ignore jumper faults
 
 // Disable flags if needed.  Usually commented
 // #define DISABLE
@@ -132,6 +132,8 @@ void setup()
   else dispStr = "----  ";
   display(&oled, 0, 1, ("F:" + dispStr), 10000);
 
+  // Reset all impending faults so only display active ones while looping
+  I->resetAll();
 
   //Reset the OBD-II-UART
   display(&oled, 0, 0, "WAIT", 500, page, font5x7, ALL);
@@ -378,7 +380,7 @@ void loop(){
       }
       else // ENGINE
       {
-        if ( F->numActive()>0 || (I->numActive()>0 && warmsSinceRes>2) )
+        if ( F->numActive()>0 )
         {
           pingReset(&oled, "04");
           F->resetAll();
