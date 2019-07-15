@@ -50,7 +50,7 @@ bool              ignoring          = true;    // Ignore jumper faults
 
 // Dependent includes.   Easier to debug code if remove unused include files
 #include "SparkFunMicroOLED.h"  // Include MicroOLED library
-#include "math.h"fcff
+#include "math.h"
 //SYSTEM_MODE(MANUAL);
 
 // Global variables
@@ -86,7 +86,7 @@ int               warmsSinceRes = 0;          // 255
 int               kmSinceRes    = 0;          // km 65535
 int               vehicleSpeed  = 0;          // kph 255
 int               vehicleRPM    = 0;          // rpm 16383
-
+//int led_button = D7;
 extern char       rxIndex       = 0;
 
 
@@ -138,10 +138,14 @@ void setup()
   Serial1.println("ATZ");
   delay(1000);
   getResponse(&oled, rxData);
+  delay(1000);
   display(&oled, 0, 1, String(rxData));
   Serial.printf("setup ending\n");
   delay(2000);
   WiFi.off();
+  delay(1000);
+
+//  pinMode(led_button, OUTPUT);
 }
 
 
@@ -378,7 +382,11 @@ void loop(){
       }
       else // ENGINE
       {
-        if ( F->numActive()>0 || (I->numActive()>0 && warmsSinceRes>2) )
+//        if (F->numActive()>0 || I->numActive()>0)
+//              digitalWrite(led_button, HIGH);
+//        else
+//              digitalWrite(led_button, LOW);
+        if ( F->numActive()>0 || (I->numActive()>0 && warmsSinceRes>1))
         {
           pingReset(&oled, "04");
           F->resetAll();
