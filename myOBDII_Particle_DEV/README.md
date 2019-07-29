@@ -35,3 +35,11 @@ Display  CAN-based OBD-II output to OLED.   Tested on Mazdaspeed3 '07'.
   5.  OTA dump of NVM as soon as WiFi available.   Alternatively, USB driven request to CoolTerm (or other simple serial monitor).
 
    Dependencies:  SparkFunMicroOLED
+
+   Notes:
+   2019-07-29   Last modified trying to debug P0456.   Never got it working better.
+   It seems photon never syncs with OBD board first time.   If reset after Initial
+   start it usually does.  Could try longer initialization delays but unlikely
+   to fix problem.
+   To build:   compile in cloud using Particle-DEV app.
+   To load:  bring device inside near a modem.   Flash using Particle-DEV.
